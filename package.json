@@ -1,0 +1,17 @@
+{
+  "name": "wwwallet",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "concurrently": "^9.2.1"
+  },
+  "scripts": {
+    "install": "./scripts/install-all.sh",
+    "start": "./scripts/run-all.sh",
+    "down": "docker compose down",
+    "migrate": "(cd services/wallet-backend-server/ && yarn typeorm migration:run)"
+  }
+}
+

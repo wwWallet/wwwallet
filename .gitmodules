@@ -1,0 +1,15 @@
+[submodule "lib/wallet-common"]
+	path = lib/wallet-common
+	url = git@github.com:wwWallet/wallet-common.git
+[submodule "wallet-frontend"]
+	path = wallet-frontend
+	url = git@github.com:wwWallet/wallet-frontend.git
+[submodule "wallet-as"]
+	path = wallet-as
+	url = git@github.com:wwWallet/wallet-as.git
+[submodule "wallet-issuer"]
+	path = wallet-issuer
+	url = git@github.com:wwWallet/wallet-issuer.git
+[submodule "wallet-backend-server"]
+	path = wallet-backend-server
+	url = git@github.com:wwWallet/wallet-backend-server.git
