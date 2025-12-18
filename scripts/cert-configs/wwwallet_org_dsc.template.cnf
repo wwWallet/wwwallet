@@ -1,0 +1,34 @@
+[ req ]
+distinguished_name = dsc_dn
+x509_extensions = no_ext
+prompt = no
+default_md = sha256
+
+[ dsc_dn ]
+C = EU
+O = wwWallet.org
+CN = example.wwwallet.org
+
+[ root_alt_names ]
+email = info@wwwallet.org
+URI = https://example.wwwallet.org
+
+[ cdp ]
+URI = https://example.wwwallet.org/iaca/crl/wwwallet_org_iaca.crl
+
+[ no_ext ]
+
+[ alternate_names ]
+DNS.1 = example.wwwallet.org
+DNS.2 = example-issuer.wwwallet.org
+DNS.3 = example-verifier.wwwallet.org
+
+[ dsc_ext ]
+authorityKeyIdentifier = keyid:always
+subjectKeyIdentifier = hash
+keyUsage = critical, digitalSignature
+issuerAltName = @root_alt_names
+extendedKeyUsage = 1.0.18013.5.1.6
+basicConstraints = critical, CA:false
+crlDistributionPoints = @cdp
+subjectAltName = @alternate_names

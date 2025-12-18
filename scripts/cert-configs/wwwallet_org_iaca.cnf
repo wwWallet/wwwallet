@@ -1,0 +1,57 @@
+[ req ]
+distinguished_name = root_dn
+x509_extensions = root_ext
+prompt = no
+default_md = sha256
+
+[ ca ]
+default_ca = CA_default
+
+[ CA_default ]
+dir               = ./scripts/keystore
+certs             = $dir
+crl_dir           = $dir/crl
+new_certs_dir     = $dir/newcerts
+database          = $dir/index.txt
+serial            = $dir/serial
+crlnumber         = $dir/crl/crlnumber
+crl               = $dir/wwwallet_org_iaca.crl
+private_key       = $dir/wwwallet_org_iaca.key
+certificate       = $dir/wwwallet_org_iaca.pem
+default_days      = 365
+default_crl_days  = 30
+default_md        = sha256
+x509_extensions   = root_ext
+crl_extensions    = crl_ext
+policy            = policy_any
+
+[ crl_ext ]
+authorityKeyIdentifier = keyid:always
+
+[ root_dn ]
+C = EU
+O = wwWallet.org
+CN = wwWallet Root CA
+
+[ root_alt_names ]
+email = info@wwwallet.org
+URI = https://wwwallet.org
+
+[ cdp ]
+URI = https://wwwallet.org/iaca/crl/wwwallet_org_iaca.crl
+
+[ root_ext ]
+subjectKeyIdentifier = hash
+keyUsage = critical, keyCertSign, cRLSign
+issuerAltName = @root_alt_names
+basicConstraints = critical, CA:true, pathlen:0
+crlDistributionPoints = @cdp
+
+[ policy_any ]
+commonName             = supplied
+countryName            = optional
+stateOrProvinceName    = optional
+localityName           = optional
+organizationName       = optional
+organizationalUnitName = optional
+emailAddress           = optional
