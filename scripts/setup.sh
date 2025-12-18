@@ -2,6 +2,7 @@
 
 cp scripts/wallet-backend-server-config.ts wallet-backend-server/config/index.ts
 cp scripts/wallet-frontend-env wallet-frontend/.env
+cp wallet-issuer/.env.template wallet-issuer/.env
 
 # copy issuer certificates and keys
 rm -rf ./wallet-issuer/certs/ ./wallet-issuer/keys/
