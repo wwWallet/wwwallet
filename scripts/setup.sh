@@ -4,10 +4,15 @@ cp scripts/wallet-backend-server-config.ts wallet-backend-server/config/index.ts
 cp scripts/wallet-frontend-env wallet-frontend/.env
 cp wallet-issuer/.env.template wallet-issuer/.env
 
-# copy issuer certificates and keys
+# copy issuer and verifier certificates and keys
+rm -rf ./wallet-issuer/certs/ ./wallet-issuer/keys/
 rm -rf ./wallet-issuer/certs/ ./wallet-issuer/keys/
 mkdir -p ./wallet-issuer/certs/
 mkdir -p ./wallet-issuer/keys/
+
+rm -rf ./wallet-verifier/certs/ ./wallet-verifier/keys/
+rm -rf ./wallet-verifier/certs/ ./wallet-verifier/keys/
+mkdir -p ./wallet-verifier/keys/
 
 cp scripts/keystore/wwwallet_org_iaca.pem ./wallet-issuer/certs/wwwallet_org_iaca.pem
 cp scripts/keystore/wwwallet_org_iaca.pem ./wallet-issuer/keys/ca.crt
@@ -19,5 +24,9 @@ yarn cmd:ecdh-keygen
 yarn cmd:hs512-keygen
 cd ../
 
-cp ./wallet-issuer/.env.template ./wallet-issuer/.env
+cp scripts/keystore/example_wwwallet_org.key.pkcs8 ./wallet-verifier/keys/pem.key
+cp scripts/keystore/wwwallet_org_iaca.pem ./wallet-verifier/keys/ca.crt
+cp scripts/keystore/example_wwwallet_org.pem ./wallet-verifier/keys/pem.crt
 
+cp ./wallet-issuer/.env.template ./wallet-issuer/.env
+cp ./wallet-verifier/config/config.template.ts ./wallet-verifier/config/config.development.ts
