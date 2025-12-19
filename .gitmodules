@@ -13,3 +13,6 @@
 [submodule "wallet-backend-server"]
 	path = wallet-backend-server
 	url = git@github.com:wwWallet/wallet-backend-server.git
+[submodule "wallet-verifier"]
+	path = wallet-verifier
+	url = git@github.com:wwWallet/wallet-verifier.git

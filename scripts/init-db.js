@@ -11,8 +11,8 @@ function pemToBase64(pem) {
 }
 
 const acmeVerifierFriendlyName = "ACME Verifier";
-const acmeVerifierURL = "http://wallet-enterprise-acme-verifier:8005";
-const dbHost = 'wallet-db';
+const acmeVerifierURL = "http://localhost:8005";
+const dbHost = '127.0.0.1';
 const dbPort = 3307;
 const dbUser = 'root';
 const dbPassword = 'root';
