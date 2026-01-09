@@ -22,10 +22,11 @@ while true; do
 done
 
 yarn concurrently \
-    --names "wallet-frontend,wallet-backend-server,wallet-issuer,wallet-verifier,vct-registry" \
-    --prefix-colors "blueBright,greenBright,yellowBright,magentaBright,cyanBright" \
+    --names "wallet-frontend,wallet-backend-server,wallet-issuer,wallet-verifier,vct-registry,wallet-as" \
+    --prefix-colors "blueBright,greenBright,yellowBright,magentaBright,cyanBright,blue" \
     "npm --prefix wallet-frontend run start" \
     "npm --prefix wallet-backend-server run dev" \
     "npm --prefix wallet-issuer run dev" \
     "npm --prefix wallet-verifier run dev" \
-    "npm --prefix vct-registry run dev"
+    "npm --prefix vct-registry run dev" \
+    "npm --prefix wallet-as run dev"

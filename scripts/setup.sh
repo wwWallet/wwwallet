@@ -30,3 +30,8 @@ cp scripts/keystore/example_wwwallet_org.pem ./wallet-verifier/keys/pem.crt
 
 cp ./wallet-issuer/.env.template ./wallet-issuer/.env
 cp ./wallet-verifier/config/config.template.ts ./wallet-verifier/config/config.development.ts
+
+mkdir -p ./wallet-backend-server/keys/
+cp scripts/keystore/example_wwwallet_org.key.pkcs8 ./wallet-backend-server/keys/wallet-provider.key
+cp scripts/keystore/example_wwwallet_org.pem ./wallet-backend-server/keys/wallet-provider.pem
+cp scripts/keystore/wwwallet_org_iaca.pem ./wallet-backend-server/keys/ca.pem
