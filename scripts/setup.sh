@@ -29,7 +29,6 @@ cp scripts/keystore/example_wwwallet_org.key.pkcs8 ./wallet-verifier/keys/pem.ke
 cp scripts/keystore/wwwallet_org_iaca.pem ./wallet-verifier/keys/ca.crt
 cp scripts/keystore/example_wwwallet_org.pem ./wallet-verifier/keys/pem.crt
 
-cp ./wallet-issuer/.env.template ./wallet-issuer/.env
 cp ./wallet-verifier/config/config.template.ts ./wallet-verifier/config/config.development.ts
 
 mkdir -p ./wallet-backend-server/keys/
