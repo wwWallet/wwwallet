@@ -5,7 +5,7 @@ cp scripts/wallet-backend-server-config.ts wallet-backend-server/config/index.ts
 cp scripts/wallet-frontend-env wallet-frontend/.env
 cp wallet-issuer/.env.template wallet-issuer/.env
 cp wallet-as/.env.template wallet-as/.env
-cp wallet-verifier/config/config.template.ts wallet-verifier/config/config.development.ts
+cp wallet-verifier/.env.template wallet-verifier/.env
 
 # Create issuer certificates and keys
 rm -rf ./wallet-issuer/certs/ ./wallet-issuer/keys/
