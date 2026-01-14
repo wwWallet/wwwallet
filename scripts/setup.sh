@@ -23,11 +23,9 @@ yarn cmd:hs512-keygen
 cd ../
 
 # Copy verifier certificates and keys
-rm -rf ./wallet-verifier/certs/ ./wallet-verifier/keys/
-mkdir -p ./wallet-verifier/certs/
+rm -rf ./wallet-verifier/keys/
 mkdir -p ./wallet-verifier/keys/
 
-cp scripts/keystore/wwwallet_org_iaca.pem ./wallet-verifier/certs/wwwallet_org_iaca.pem
 cp scripts/keystore/example_wwwallet_org.key.pkcs8 ./wallet-verifier/keys/pem.key
 cp scripts/keystore/wwwallet_org_iaca.pem ./wallet-verifier/keys/ca.crt
 cp scripts/keystore/example_wwwallet_org.pem ./wallet-verifier/keys/pem.crt
