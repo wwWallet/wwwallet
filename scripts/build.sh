@@ -90,3 +90,9 @@ if contains "wallet-verifier" "${images[@]}"; then
 	docker buildx build --platform $arch $push_flag -t ${context}/wallet-verifier:${ver} .
 	cd ..
 fi
+
+if contains "vct-registry" "${images[@]}"; then
+	cd vct-registry/
+	docker buildx build --platform $arch $push_flag -t ${context}/vct-registry:${ver} .
+	cd ..
+fi
