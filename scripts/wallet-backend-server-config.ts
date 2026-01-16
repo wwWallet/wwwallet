@@ -23,5 +23,6 @@ export const config = {
 	notifications: {
 		enabled: true,
 		serviceAccount: "firebaseConfig.json"
-	}
+	},
+	keysDir: __dirname + "../../../keys",
 }
