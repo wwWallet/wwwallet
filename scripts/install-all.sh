@@ -14,3 +14,9 @@ for dir in */ ; do
 done
 
 wait
+
+if [ "${WALLET_COMMON_SOURCE}" = "local" ]; then
+  node ./scripts/set-wallet-common-source.js local
+elif [ "${WALLET_COMMON_SOURCE}" = "hash" ]; then
+  node ./scripts/set-wallet-common-source.js hash
+fi
