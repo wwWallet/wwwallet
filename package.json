@@ -15,6 +15,7 @@
     "init-db": "yarn migrate && node ./scripts/init-db.js",
     "down": "docker compose down",
     "migrate": "(cd wallet-backend-server/ && yarn typeorm migration:run)",
+    "migrate-verifier": "(cd wallet-verifier/ && yarn migration:run)",
     "gen-iaca-keys": "./scripts/gen-iaca-keys.sh",
     "gen-dsc-keys": "./scripts/gen-dsc-keys.sh",
     "install:precommit-hooks": "./scripts/install-precommit-hooks.sh"
