@@ -1,7 +1,23 @@
 #!/bin/bash
 
-# Copy configuration and environment template files
-cp scripts/wallet-backend-server-config.ts wallet-backend-server/config/index.ts
+cp wallet-backend-server/config/config.template.ts  wallet-backend-server/config/index.ts
+cat <<EOF > wallet-backend-server/.env
+APP_URL=http://localhost:8002
+APP_SECRET=dsfkwfkwfwdfdsfSaSe2e34r4frwr42rAFdsf2lfmfsmklfwmer
+PORT=8002
+DB_HOST=localhost
+DB_PORT=3307
+DB_USER=root
+DB_PASSWORD=root
+DB_NAME=wallet
+WALLET_CLIENT_URL=http://localhost:3000/cb
+WEBAUTHN_ORIGIN=http://localhost:3000
+WEBAUTHN_RP_ID=localhost
+WEBAUTHN_RP_NAME=Digital Wallet demo
+NOTIFICATIONS_ENABLED=false
+KEYS_DIR=$PWD/wallet-backend-server/keys
+EOF
+
 cp scripts/wallet-frontend-env wallet-frontend/.env
 cp wallet-issuer/.env.template wallet-issuer/.env
 cp wallet-as/.env.template wallet-as/.env
