@@ -18,7 +18,7 @@ NOTIFICATIONS_ENABLED=false
 KEYS_DIR=$PWD/wallet-backend-server/keys
 EOF
 
-cp scripts/wallet-frontend-env wallet-frontend/.env
+cp wallet-frontend/.env.template wallet-frontend/.env
 cp wallet-issuer/.env.template wallet-issuer/.env
 cp wallet-as/.env.template wallet-as/.env
 cp wallet-verifier/.env.template wallet-verifier/.env
