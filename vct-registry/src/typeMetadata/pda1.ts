@@ -9,13 +9,17 @@ export const pda1Metadata = {
 	"display": [
 		{
 			"locale": "en-US",
-			"name": "PDA1 SD-JWT VC",
-			"description": "Portable Document A1 (PDA1) SD-JWT VC.",
+			"name": "PDA1",
+			"description": "Portable Document A1 (PDA1) SD-JWT VC",
 			"rendering": {
+				"simple": {
+					"background_color": "#c3e3ab",
+					"text_color": "#555555",
+				},
 				"svg_templates": [
 					{
-						"uri": config.url + "/images/template-pda1.svg",
-						"uri#integrity": createSRI("template-pda1.svg"),
+						"uri": config.url + "/images/pda1-svg-template.svg",
+						"uri#integrity": createSRI("pda1-svg-template.svg"),
 						"properties": {
 							"orientation": "landscape",
 							"color_scheme": "light",

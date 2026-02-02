@@ -10,15 +10,16 @@ export const pidMetadata = {
 		{
 			"locale": "en-US",
 			"name": "PID",
+			"description": "Person Identification Data (PID) SD-JWT VC",
 			"rendering": {
 				"simple": {
-					"background_color": "#4cc3dd",
-					"text_color": "#FFFFFF"
+					"background_color": "#b8e6ff",
+					"text_color": "#393c3e"
 				},
 				"svg_templates": [
 					{
-						"uri": config.url + "/images/template-pid.svg",
-						"uri#integrity": createSRI("template-pid.svg"),
+						"uri": config.url + "/images/pid-svg-template.svg",
+						"uri#integrity": createSRI("pid-svg-template.svg"),
 						"properties": {
 							"orientation": "landscape",
 							"color_scheme": "light",
