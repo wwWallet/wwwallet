@@ -1,3 +1,3 @@
 CREATE DATABASE wallet;
 CREATE DATABASE verifier;
-
+CREATE DATABASE vct_registry;
