@@ -34,11 +34,17 @@ wwWallet is a modular reference implementation for verifiable credentials, provi
    ```sh
    yarn start
    ```
-5. Initialize DB (only the first time):
-	- *Uploads IACA certificat generated from step 3. to the database of the wallet*
-	- *Registers issuer and verifier in the database of the wallet*
+### First-time Setup
+5. Initialize DB:
+	- Uploads IACA certificat generated from step 3. to the database of the wallet
+	- Registers issuer and verifier in the database of the wallet
 	```sh
    yarn init-db
+   ```
+6. Install pre-commit hooks (optional but recommended):
+   - Installs pre-commit hooks that enforce `.editorconfig` rules and apply minimal auto-fixes (e.g. adding missing newlines) across all submodules that include an `.editorconfig` file.
+   ```sh
+   yarn instal:precommit-hooks
    ```
 
 ## 🏭 Build for Production
