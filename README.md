@@ -44,7 +44,7 @@ wwWallet is a modular reference implementation for verifiable credentials, provi
 6. Install pre-commit hooks (optional but recommended):
    - Installs pre-commit hooks that enforce `.editorconfig` rules and apply minimal auto-fixes (e.g. adding missing newlines) across all submodules that include an `.editorconfig` file.
    ```sh
-   yarn instal:precommit-hooks
+   yarn install:precommit-hooks
    ```
 
 ## 🏭 Build for Production
