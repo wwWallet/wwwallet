@@ -3,23 +3,27 @@ import { createSRI } from "../sriGenerator";
 
 export const ehicMetadata = {
 	"vct": "urn:eudi:ehic:1",
-	"name": "EHIC SD-JWT TYPE METADATA",
-	"description": "European Health Insurance Card (EHIC) SD-JWT Verifiable Credential Type Metadata, based on ietf-oauth-sd-jwt-vc (draft 09), using a single language tag (en-US).",
-	"$comment": "Implementation of this example Type Metadata may require Member State-specific clarifications to align with national policies governing the display of included claims.",
+	"name": "EHIC SD-JWT VC TYPE METADATA",
+	"description": "European Health Insurance Card (EHIC) SD-JWT Verifiable Credential Type Metadata, based on ietf-oauth-sd-jwt-vc (draft 13), using a single language tag (en-US).",
 	"display": [
 		{
 			"locale": "en-US",
-			"name": "EHIC SD-JWT VC",
+			"name": "EHIC",
 			"description": "European Health Insurance Card (EHIC) SD-JWT VC",
 			"rendering": {
 				"simple": {
-					"background_color": "#1b263b",
-					"text_color": "#FFFFFF"
+					"background_color": "#515c90",
+					"text_color": "#FFFFFF",
+					"logo": {
+						"uri": config.url + "/images/ehic-logo.png",
+						"uri#integrity": createSRI("ehic-logo.png"),
+						"alt_text": "EHIC Logo"
+					},
 				},
 				"svg_templates": [
 					{
-						"uri": config.url + "/images/template-ehic.svg",
-						"uri#integrity": createSRI("./public/images/template-ehic.svg"),
+						"uri": config.url + "/images/ehic-svg-template.svg",
+						"uri#integrity": createSRI("ehic-svg-template.svg"),
 						"properties": {
 							"orientation": "landscape",
 							"color_scheme": "light",

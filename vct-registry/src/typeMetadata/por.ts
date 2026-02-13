@@ -3,19 +3,22 @@ import { createSRI } from "../sriGenerator";
 
 export const porMetadata = {
 	"vct": "urn:eu.europa.ec.eudi:por:1",
-	"name": "POTENTIAL POR SD-JWT VCTM",
-	"description": "POTENTIAL Power of Representation (POR) SD-JWT Verifiable Credential Type Metadata, based on ietf-oauth-sd-jwt-vc (draft 09), using a single language tag (en-US).",
-	"$comment": "Based on the Power Of Representation Rulebook v1.2 of the LSP POTENTIAL UC1.",
+	"name": "POR SD-JWT VC Type Metadata",
+	"description": "Power of Representation (POR) SD-JWT Verifiable Credential Type Metadata, based on ietf-oauth-sd-jwt-vc (draft 09), using a single language tag (en-US).",
 	"display": [
 		{
 			"locale": "en-US",
-			"name": "POR SD-JWT VC",
+			"name": "POR",
 			"description": "Power of Representation (POR) SD-JWT VC",
 			"rendering": {
+				"simple": {
+					"background_color": "#c3b25d",
+					"text_color": "#363531",
+				},
 				"svg_templates": [
 					{
-						"uri": config.url + "/images/template-por.svg",
-						"uri#integrity": createSRI("./public/images/template-por.svg"),
+						"uri": config.url + "/images/por-svg-template.svg",
+						"uri#integrity": createSRI("por-svg-template.svg"),
 						"properties": {
 							"orientation": "landscape",
 							"color_scheme": "light",

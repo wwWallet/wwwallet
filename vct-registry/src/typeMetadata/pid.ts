@@ -3,22 +3,22 @@ import { config } from "../../config";
 
 export const pidMetadata = {
 	"vct": "urn:eudi:pid:1",
-	"name": "Example ARF 1.8 PID SD-JWT TYPE METADATA",
-	"description": "Example PID SD-JWT Verifiable Credential Type Metadata, based on ietf-oauth-sd-jwt-vc (draft 09), using a single language tag (en-US). Adheres to PID Rulebook ARF 1.8 (urn:eudi:pid:1) and later, as of the time of publication.",
-	"$comment": "Implementation of this example type metadata may require Member State–specific clarifications to align with national policies governing the display of included claims.",
+	"name": "PID SD-JWT VC Type Metadata",
+	"description": "Example PID SD-JWT Verifiable Credential Type Metadata, based on ietf-oauth-sd-jwt-vc (draft 13), using a single language tag (en-US). Adheres to PID Rulebook ARF 1.8 (urn:eudi:pid:1) and later, as of the time of publication.",
 	"display": [
 		{
 			"locale": "en-US",
 			"name": "PID",
+			"description": "Person Identification Data (PID) SD-JWT VC",
 			"rendering": {
 				"simple": {
-					"background_color": "#4cc3dd",
-					"text_color": "#FFFFFF"
+					"background_color": "#b8e6ff",
+					"text_color": "#393c3e"
 				},
 				"svg_templates": [
 					{
-						"uri": config.url + "/images/template-pid.svg",
-						"uri#integrity": createSRI("./public/images/template-pid.svg"),
+						"uri": config.url + "/images/pid-svg-template.svg",
+						"uri#integrity": createSRI("pid-svg-template.svg"),
 						"properties": {
 							"orientation": "landscape",
 							"color_scheme": "light",

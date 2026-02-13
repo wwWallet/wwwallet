@@ -3,25 +3,27 @@ import { createSRI } from "../sriGenerator";
 
 export const diplomaMetadata = {
 	"vct": 'urn:credential:diploma',
-	"name": "Diploma Credential",
+	"name": "Diploma VC Type Metadata",
 	"description": "This is a Bachelor Diploma verifiable credential",
 	"display": [
 		{
 			"locale": "en-US",
-			"name": "Diploma Credential",
+			"name": "Diploma",
+			"description": "Bachelor Diploma SD-JWT VC",
 			"rendering": {
 				"simple": {
 					"logo": {
-						"uri": config.url + "/images/logo.png",
-						"uri#integrity": createSRI("./public/images/template-diploma.svg"),
+						"uri": config.url + "/images/diploma-logo.png",
+						"uri#integrity": createSRI("diploma-logo.png"),
 						"alt_text": "Diploma Logo"
 					},
-					"background_color": "#4CC3DD",
-					"text_color": "#FFFFFF"
+					"background_color": "#b1d3ff",
+					"text_color": "#050708"
 				},
 				"svg_templates": [
 					{
-						"uri": config.url + "/images/template-diploma.svg",
+						"uri": config.url + "/images/diploma-svg-template.svg",
+						"uri#integrity": createSRI("diploma-svg-template.svg"),
 					}
 				],
 			}
