@@ -46,6 +46,13 @@ cp scripts/keystore/example_wwwallet_org.key.pkcs8 ./wallet-verifier/keys/pem.ke
 cp scripts/keystore/wwwallet_org_iaca.pem ./wallet-verifier/keys/ca.crt
 cp scripts/keystore/example_wwwallet_org.pem ./wallet-verifier/keys/pem.crt
 
+# Copy as certificates and keys
+rm -rf ./wallet-as/keys/
+mkdir -p ./wallet-as/keys/
+
+cp scripts/keystore/example_wwwallet_org.pem ./wallet-as/keys/pem.crt
+cp scripts/keystore/example_wwwallet_org.key.pkcs8 ./wallet-as/keys/pem.key
+
 # Copy wallet backend server certificates and keys
 mkdir -p ./wallet-backend-server/keys/
 cp scripts/keystore/example_wwwallet_org.key.pkcs8 ./wallet-backend-server/keys/wallet-provider.key
