@@ -49,6 +49,7 @@ cp scripts/keystore/example_wwwallet_org.pem ./wallet-verifier/keys/pem.crt
 # Copy as certificates and keys
 rm -rf ./wallet-as/keys/
 mkdir -p ./wallet-as/keys/
+touch ./wallet-as/keys/.keep
 
 cp scripts/keystore/example_wwwallet_org.pem ./wallet-as/keys/pem.crt
 cp scripts/keystore/example_wwwallet_org.key.pkcs8 ./wallet-as/keys/pem.key
