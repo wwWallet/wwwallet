@@ -3,22 +3,37 @@
 WORKDIR="./scripts"
 
 
-if [ -z "$1" ]; then
+if [[ -z "$1" || -z "$2" ]]; then
   echo "Project name argument is missing"
-  echo "Usage: ./scripts/gen-dsc-keys.sh [PROJECT NAME]"
+  echo "Usage: ./scripts/gen-dsc-keys.sh <PROJECT NAME> <SERVICE_NAME> [edit_flag]"
+  echo "edit_flag: 0 | 1"
   exit 1
 fi
 
+
+
 PROJECT_NAME=$1
+SERVICE_NAME=$2
+[ "$3" == "1" ] && EDIT_FLAG=1 || EDIT_FLAG=0
+
+if [ -z "$1" ]; then
+  echo "Error: SERVICE_NAME argument is missing."
+  return 1
+fi
+
+local SERVICE_NAME=$1
 
 # configure the projects cnf file (change SANs, CRLs, CN, etc.)
-cp ${WORKDIR}/cert-configs/wwwallet_org_dsc.template.cnf ${WORKDIR}/keystore/${PROJECT_NAME}_wwwallet_org_dsc.cnf
-vi ${WORKDIR}/keystore/${PROJECT_NAME}_wwwallet_org_dsc.cnf
+cp ${WORKDIR}/cert-configs/wwwallet_org_dsc.template.cnf ${WORKDIR}/keystore/${SERVICE_NAME}_${PROJECT_NAME}_wwwallet_org_dsc.cnf
+if [[ "$EDIT_FLAG" == "1" ]]; then
+  vi ${WORKDIR}/keystore/${SERVICE_NAME}_${PROJECT_NAME}_wwwallet_org_dsc.cnf
+fi
 
-echo "${WORKDIR}/keystore/${PROJECT_NAME}_wwwallet_org_dsc.cnf written on disk"
+
+echo "${WORKDIR}/keystore/${SERVICE_NAME}_${PROJECT_NAME}_wwwallet_org_dsc.cnf written on disk"
 
 # generate private key with algorithm ES256
-KEY_PATH=${WORKDIR}/keystore/${PROJECT_NAME}_wwwallet_org.key
+KEY_PATH=${WORKDIR}/keystore/${SERVICE_NAME}_${PROJECT_NAME}_wwwallet_org.key
 openssl ecparam -name prime256v1 -genkey -out $KEY_PATH
 
 echo "Generated private key with algorithm ES256"
@@ -27,10 +42,10 @@ echo "Generated private key with algorithm ES256"
 openssl pkcs8 -topk8 -inform PEM -in ${KEY_PATH} -outform PEM -out ${KEY_PATH}.pkcs8  -nocrypt
 
 # create Certificate Signing Request to send it to the IACA (generates .csr)
-openssl req -new -config ${WORKDIR}/keystore/${PROJECT_NAME}_wwwallet_org_dsc.cnf -key ${WORKDIR}/keystore/${PROJECT_NAME}_wwwallet_org.key -out ${WORKDIR}/keystore/${PROJECT_NAME}_wwwallet_org.csr
-echo "Generated CSR for DSC and stored to ${WORKDIR}/keystore/${PROJECT_NAME}_wwwallet_org.csr"
+openssl req -new -config ${WORKDIR}/keystore/${SERVICE_NAME}_${PROJECT_NAME}_wwwallet_org_dsc.cnf -key ${WORKDIR}/keystore/${SERVICE_NAME}_${PROJECT_NAME}_wwwallet_org.key -out ${WORKDIR}/keystore/${SERVICE_NAME}_${PROJECT_NAME}_wwwallet_org.csr
+echo "Generated CSR for DSC and stored to ${WORKDIR}/keystore/${SERVICE_NAME}_${PROJECT_NAME}_wwwallet_org.csr"
 
 # IACA accepts Certificate Signing Request and generates the certificate for the new project
-openssl x509 -req -CA ${WORKDIR}/keystore/wwwallet_org_iaca.pem -CAcreateserial -CAserial ${WORKDIR}/keystore/serial -CAkey ${WORKDIR}/keystore/wwwallet_org_iaca.key -days 365 -extfile ${WORKDIR}/keystore/${PROJECT_NAME}_wwwallet_org_dsc.cnf -extensions dsc_ext -in ${WORKDIR}/keystore/${PROJECT_NAME}_wwwallet_org.csr -out ${WORKDIR}/keystore/${PROJECT_NAME}_wwwallet_org.pem
+openssl x509 -req -CA ${WORKDIR}/keystore/wwwallet_org_iaca.pem -CAcreateserial -CAserial ${WORKDIR}/keystore/serial -CAkey ${WORKDIR}/keystore/wwwallet_org_iaca.key -days 365 -extfile ${WORKDIR}/keystore/${SERVICE_NAME}_${PROJECT_NAME}_wwwallet_org_dsc.cnf -extensions dsc_ext -in ${WORKDIR}/keystore/${SERVICE_NAME}_${PROJECT_NAME}_wwwallet_org.csr -out ${WORKDIR}/keystore/${SERVICE_NAME}_${PROJECT_NAME}_wwwallet_org.pem
 
-echo "Generated certificate on path ${WORKDIR}/keystore/${PROJECT_NAME}_wwwallet_org.pem"
+echo "Generated certificate on path ${WORKDIR}/keystore/${SERVICE_NAME}_${PROJECT_NAME}_wwwallet_org.pem"
