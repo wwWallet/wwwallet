@@ -1,5 +1,11 @@
 #!/bin/bash
 
+./scripts/gen-iaca-keys.sh
+./scripts/gen-dsc-keys.sh example wallet_provider
+./scripts/gen-dsc-keys.sh example wallet_issuer
+./scripts/gen-dsc-keys.sh example wallet_verifier
+
+
 cp wallet-backend-server/config/config.template.ts  wallet-backend-server/config/index.ts
 cat <<EOF > wallet-backend-server/.env
 APP_URL=http://localhost:8002
@@ -30,8 +36,8 @@ mkdir -p ./wallet-issuer/keys/
 
 cp scripts/keystore/wwwallet_org_iaca.pem ./wallet-issuer/certs/wwwallet_org_iaca.pem
 cp scripts/keystore/wwwallet_org_iaca.pem ./wallet-issuer/keys/ca.crt
-cp scripts/keystore/example_wwwallet_org.pem ./wallet-issuer/keys/pem.crt
-cp scripts/keystore/example_wwwallet_org.key.pkcs8 ./wallet-issuer/keys/pem.key
+cp scripts/keystore/wallet_issuer_example_wwwallet_org.pem ./wallet-issuer/keys/pem.crt
+cp scripts/keystore/wallet_issuer_example_wwwallet_org.key.pkcs8 ./wallet-issuer/keys/pem.key
 
 cd wallet-issuer/
 yarn cmd:ecdh-keygen
@@ -42,9 +48,9 @@ cd ../
 rm -rf ./wallet-verifier/keys/
 mkdir -p ./wallet-verifier/keys/
 
-cp scripts/keystore/example_wwwallet_org.key.pkcs8 ./wallet-verifier/keys/pem.key
+cp scripts/keystore/wallet_verifier_example_wwwallet_org.key.pkcs8 ./wallet-verifier/keys/pem.key
 cp scripts/keystore/wwwallet_org_iaca.pem ./wallet-verifier/keys/ca.crt
-cp scripts/keystore/example_wwwallet_org.pem ./wallet-verifier/keys/pem.crt
+cp scripts/keystore/wallet_verifier_example_wwwallet_org.pem ./wallet-verifier/keys/pem.crt
 
 # Copy as certificates and keys
 rm -rf ./wallet-as/keys/
@@ -59,6 +65,6 @@ cp scripts/keystore/wwwallet_org_iaca.pem ./wallet-as/certs/wwwallet_org_iaca.pe
 
 # Copy wallet backend server certificates and keys
 mkdir -p ./wallet-backend-server/keys/
-cp scripts/keystore/example_wwwallet_org.key.pkcs8 ./wallet-backend-server/keys/wallet-provider.key
-cp scripts/keystore/example_wwwallet_org.pem ./wallet-backend-server/keys/wallet-provider.pem
+cp scripts/keystore/wallet_provider_example_wwwallet_org.key.pkcs8 ./wallet-backend-server/keys/wallet-provider.key
+cp scripts/keystore/wallet_provider_example_wwwallet_org.pem ./wallet-backend-server/keys/wallet-provider.pem
 cp scripts/keystore/wwwallet_org_iaca.pem ./wallet-backend-server/keys/ca.pem

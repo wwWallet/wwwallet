@@ -8,7 +8,7 @@
     "concurrently": "^9.2.1"
   },
   "scripts": {
-    "setup": "yarn gen-iaca-keys && yarn gen-dsc-keys example && ./scripts/setup.sh",
+    "setup": "./scripts/setup.sh",
     "install": "./scripts/install-all.sh",
     "start": "./scripts/run-all.sh",
     "build:prod": "./scripts/build.sh",
