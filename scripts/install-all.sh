@@ -17,6 +17,6 @@ wait
 
 if [ "${WALLET_COMMON_SOURCE}" = "local" ]; then
   node ./scripts/set-wallet-common-source.js local
-elif [ "${WALLET_COMMON_SOURCE}" = "hash" ]; then
-  node ./scripts/set-wallet-common-source.js hash
+elif [ "${WALLET_COMMON_SOURCE}" = "default" ]; then
+  node ./scripts/set-wallet-common-source.js default
 fi

@@ -8,10 +8,10 @@ const path = require('path');
 const root = path.resolve(__dirname, '..');
 const walletCommonPath = path.join(root, 'lib', 'wallet-common');
 const mode = process.argv[2];
-const allowedModes = new Set(['local', 'hash']);
+const allowedModes = new Set(['local', 'default']);
 
 if (!allowedModes.has(mode)) {
-  console.error('Usage: node scripts/set-wallet-common-source.js <local|hash>');
+  console.error('Usage: node scripts/set-wallet-common-source.js <local|default>');
   process.exit(1);
 }
 

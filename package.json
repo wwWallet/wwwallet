@@ -9,9 +9,8 @@
   },
   "scripts": {
     "setup": "yarn gen-iaca-keys && yarn gen-dsc-keys example && ./scripts/setup.sh",
-    "install": "./scripts/install-all.sh",
+    "install": "WALLET_COMMON_SOURCE=default ./scripts/install-all.sh",
     "install:local": "WALLET_COMMON_SOURCE=local ./scripts/install-all.sh",
-    "install:hash": "WALLET_COMMON_SOURCE=hash ./scripts/install-all.sh",
     "start": "./scripts/run-all.sh",
     "build:prod": "./scripts/build.sh",
     "init-db": "yarn migrate && node ./scripts/init-db.js",
