@@ -8,14 +8,9 @@
     "concurrently": "^9.2.1"
   },
   "scripts": {
-<<<<<<< wallet-common-switch
-    "setup": "yarn gen-iaca-keys && yarn gen-dsc-keys example && ./scripts/setup.sh",
+    "setup": "./scripts/setup.sh",
     "install": "WALLET_COMMON_SOURCE=default ./scripts/install-all.sh",
     "install:local": "WALLET_COMMON_SOURCE=local ./scripts/install-all.sh",
-=======
-    "setup": "./scripts/setup.sh",
-    "install": "./scripts/install-all.sh",
->>>>>>> master
     "start": "./scripts/run-all.sh",
     "build:prod": "./scripts/build.sh",
     "init-db": "yarn migrate && node ./scripts/init-db.js",
