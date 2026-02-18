@@ -62,36 +62,42 @@ fi
 
 
 if contains "wallet-frontend" "${images[@]}"; then
+  echo "Building wallet-frontend"
 	cd wallet-frontend/
 	docker buildx build --platform $arch $push_flag -t ${context}/wallet-frontend:${ver} .
 	cd ..
 fi
 
 if contains "wallet-backend-server" "${images[@]}"; then
+  echo "Building wallet-backend-server"
 	cd wallet-backend-server/
 	docker buildx build --platform $arch $push_flag -t ${context}/wallet-backend-server:${ver} .
 	cd ..
 fi
 
 if contains "wallet-as" "${images[@]}"; then
+  echo "Building wallet-as"
 	cd wallet-as/
 	docker buildx build --platform $arch $push_flag -t ${context}/wallet-as:${ver} .
 	cd ..
 fi
 
 if contains "wallet-issuer" "${images[@]}"; then
+  echo "Building wallet-issuer"
 	cd wallet-issuer/
 	docker buildx build --platform $arch $push_flag -t ${context}/wallet-issuer:${ver} .
 	cd ..
 fi
 
 if contains "wallet-verifier" "${images[@]}"; then
+  echo "Building wallet-verifier"
 	cd wallet-verifier/
 	docker buildx build --platform $arch $push_flag -t ${context}/wallet-verifier:${ver} .
 	cd ..
 fi
 
 if contains "vct-registry" "${images[@]}"; then
+  echo "Building vct-registry"
 	cd vct-registry/
 	docker buildx build --platform $arch $push_flag -t ${context}/vct-registry:${ver} .
 	cd ..
