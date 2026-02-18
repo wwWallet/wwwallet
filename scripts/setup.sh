@@ -22,6 +22,7 @@ WEBAUTHN_RP_ID=localhost
 WEBAUTHN_RP_NAME=Digital Wallet demo
 NOTIFICATIONS_ENABLED=false
 KEYS_DIR=$PWD/wallet-backend-server/keys
+OHTTP_GATEWAY_URL=http://localhost:4567
 EOF
 
 cp wallet-frontend/.env.template wallet-frontend/.env
