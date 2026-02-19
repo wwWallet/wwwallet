@@ -16,3 +16,6 @@
 [submodule "wallet-verifier"]
 	path = wallet-verifier
 	url = git@github.com:wwWallet/wallet-verifier.git
+[submodule "privacy-gateway-server-go"]
+	path = privacy-gateway-server-go
+	url = https://github.com/gunet/privacy-gateway-server-go.git

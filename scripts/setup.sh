@@ -4,7 +4,7 @@
 ./scripts/gen-dsc-keys.sh example wallet_provider
 ./scripts/gen-dsc-keys.sh example wallet_issuer
 ./scripts/gen-dsc-keys.sh example wallet_verifier
-
+./scripts/gen-dsc-keys.sh example wallet_as
 
 cp wallet-backend-server/config/config.template.ts  wallet-backend-server/config/index.ts
 cat <<EOF > wallet-backend-server/.env
@@ -22,6 +22,7 @@ WEBAUTHN_RP_ID=localhost
 WEBAUTHN_RP_NAME=Digital Wallet demo
 NOTIFICATIONS_ENABLED=false
 KEYS_DIR=$PWD/wallet-backend-server/keys
+OHTTP_GATEWAY_URL=http://localhost:4567
 EOF
 
 cp wallet-frontend/.env.template wallet-frontend/.env
@@ -51,6 +52,17 @@ mkdir -p ./wallet-verifier/keys/
 cp scripts/keystore/wallet_verifier_example_wwwallet_org.key.pkcs8 ./wallet-verifier/keys/pem.key
 cp scripts/keystore/wwwallet_org_iaca.pem ./wallet-verifier/keys/ca.crt
 cp scripts/keystore/wallet_verifier_example_wwwallet_org.pem ./wallet-verifier/keys/pem.crt
+
+# Copy as certificates and keys
+rm -rf ./wallet-as/keys/
+mkdir -p ./wallet-as/keys/
+touch ./wallet-as/keys/.keep
+mkdir -p ./wallet-as/certs/
+touch ./wallet-as/certs/.keep
+
+cp scripts/keystore/wallet_as_example_wwwallet_org.pem ./wallet-as/keys/pem.crt
+cp scripts/keystore/wallet_as_example_wwwallet_org.key.pkcs8 ./wallet-as/keys/pem.key
+cp scripts/keystore/wwwallet_org_iaca.pem ./wallet-as/certs/wwwallet_org_iaca.pem
 
 # Copy wallet backend server certificates and keys
 mkdir -p ./wallet-backend-server/keys/

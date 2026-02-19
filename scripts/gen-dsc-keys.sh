@@ -21,7 +21,6 @@ if [ -z "$1" ]; then
   return 1
 fi
 
-local SERVICE_NAME=$1
 
 # configure the projects cnf file (change SANs, CRLs, CN, etc.)
 cp ${WORKDIR}/cert-configs/wwwallet_org_dsc.template.cnf ${WORKDIR}/keystore/${SERVICE_NAME}_${PROJECT_NAME}_wwwallet_org_dsc.cnf

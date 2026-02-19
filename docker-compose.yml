@@ -28,7 +28,23 @@ services:
       - datadir:/var/lib/mysql
       # bind-mount any sql files that should be run while initializing
       - ./db-setup/scripts/:/docker-entrypoint-initdb.d/
-
+  gateway:
+    build:
+      context: ./privacy-gateway-server-go
+      dockerfile: Dockerfile
+    ports:
+      - "4567:4567"
+    environment:
+      - LOG_FORMAT=json
+      - LOG_LEVEL=DEBUG
+      - PORT=4567
+      - SEED_SECRET_KEY=869663da4842c8cd5bca96047dd7dd09ff88a9907fd17c9fd585fa219ee987de
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4567/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    network_mode: host
 
 volumes:
   datadir:
