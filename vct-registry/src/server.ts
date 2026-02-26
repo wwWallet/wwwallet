@@ -1,40 +1,79 @@
 // src/server.ts
-import express from 'express';
-import cors from 'cors';
-import path from 'path';
-import { config } from '../config';
-import { ALL_METADATA } from './registry';
+import express from "express";
+import cors from "cors";
+import path from "path";
+import cookieParser from "cookie-parser";
+import { config } from "../config";
+import knexConfig from "../knexfile";
+import { auth, login, logout } from "./middleware/auth";
+import { typeMetadataSchema } from "./schema/typeMetadataSchema";
+import Ajv2020 from "ajv/dist/2020.js";
+import addFormats from "ajv-formats";
+import { knex } from "knex";
+import { getAllVctMetadata, initVctTable } from "./db/vct";
+import apiRouter from "./routes/api";
+import typeMetadataRouter from "./routes/typeMetadata";
+import dbVctRouter from "./routes/db";
+import nunjucks from "nunjucks";
 
-const app = express();
+export const app = express();
 const PORT = config.port;
 
+// ─────────────────────────────────────────────────────────────
+// Middleware initialization
+// ─────────────────────────────────────────────────────────────
+
 app.use(cors());
+app.use(cookieParser())
+app.use(express.json());
+
+// ─────────────────────────────────────────────────────────────
+// Database initialization
+// ─────────────────────────────────────────────────────────────
+
+export const db = knex(knexConfig);
+initVctTable(db);
+
+// ─────────────────────────────────────────────────────────────
+// AJV Validation initialization
+// ─────────────────────────────────────────────────────────────
+
+const ajv = new Ajv2020({
+	allErrors: true,
+	strict: true,
+	allowUnionTypes: true,
+	useDefaults: true,
+	coerceTypes: true,
+});
+addFormats(ajv); // support uri, etc.
+export const validateAjv = ajv.compile(typeMetadataSchema);
 
 // ─────────────────────────────────────────────────────────────
 // Basic info endpoints
 // ─────────────────────────────────────────────────────────────
 
-app.get('/api/health', (_req, res) => {
-	res.json({
-		status: 'ok',
-		uptime: process.uptime(),
-		timestamp: new Date().toISOString(),
+app.use("/api", apiRouter);
+
+// ─────────────────────────────────────────────────────────────
+// Authentication login/logout endpoints
+// ─────────────────────────────────────────────────────────────
+
+// Login endpoint: just triggers auth middleware to set cookie
+app.get('/login', login, (req, res) => {
+	res.send(`Logged in as ${(req as any).username}.`);
+});
+
+// Auth endpoint: checks if cookie exists
+app.get('/auth', auth, (req, res) => {
+	res.send({
+		username: (req as any).username
 	});
 });
 
-app.get('/api/info', (_req, res) => {
-	res.json({
-		name: 'vct-registry',
-		version: '1.0.0',
-		description: 'Express + TypeScript app for local VCT registry metadata.',
-	});
-});
-
-app.get('/api/time', (_req, res) => {
-	res.json({
-		now: new Date().toISOString(),
-		timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-	});
+// Logout endpoint: clears cookie
+app.get('/logout', (req, res) => {
+	logout(req, res);
+	res.send('Logged out successfully.');
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -45,8 +84,10 @@ app.get('/api/time', (_req, res) => {
  * GET /api/vct
  * Returns a simple list of all VCTs + names.
  */
-app.get('/api/vct', (_req, res) => {
-	const list = ALL_METADATA.map((meta) => ({
+app.get("/api/vct", async (_req, res) => {
+	const result = await getAllVctMetadata(db);
+
+	const list = result.map((meta) => ({
 		vct: meta.vct,
 		name: meta.name,
 	}));
@@ -58,67 +99,61 @@ app.get('/api/vct', (_req, res) => {
 // VCT API compatible with demo-issuer style (by vct)
 // ─────────────────────────────────────────────────────────────
 
-/**
- * GET /type-metadata?vct=urn:...
- * Returns the metadata object whose .vct matches the query.
- */
-app.get('/type-metadata', (req, res) => {
-	const vct = typeof req.query.vct === 'string'
-		? decodeURIComponent(req.query.vct).trim()
-		: undefined;
-
-	if (!vct || typeof vct !== 'string') {
-		return res.status(400).json({
-			error: 'missing_vct',
-			message: 'Query parameter "vct" is required',
-		});
-	}
-
-	const metadata = ALL_METADATA.find((m) => m.vct === vct);
-
-	if (!metadata) {
-		return res.status(404).json({
-			error: 'unknown_vct',
-			message: `No metadata found for vct "${vct}"`,
-		});
-	}
-
-	res.json(metadata);
-});
-
-/**
- * GET /type-metadata/all
- * Returns an array of all metadata objects.
- */
-app.get('/type-metadata/all', (_req, res) => {
-	res.json(ALL_METADATA);
-});
+app.use("/type-metadata", typeMetadataRouter);
 
 // ─────────────────────────────────────────────────────────────
 // Static frontend
 // ─────────────────────────────────────────────────────────────
 
-const publicPath = path.join(__dirname, '../public');
+const publicPath = path.join(__dirname, "../public");
+const viewsPath = path.join(publicPath, "views");
+
+nunjucks.configure(path.join(publicPath, "views"), {
+    autoescape: true,
+    express: app
+});
+
+app.set("view engine", "njk");
 
 // 30-day immutable cache for images
 app.use(
-	'/images',
-	express.static(path.join(publicPath, 'images'), {
-		maxAge: '30d',
+	"/images",
+	express.static(path.join(publicPath, "images"), {
+		maxAge: "30d",
 		immutable: true,
-	})
+	}),
 );
 
 // No caching for the rest of the UI (HTML, JS, CSS)
 app.use(
 	express.static(publicPath, {
 		maxAge: 0,
-	})
+	}),
 );
 
-app.get('/', (_req, res) => {
-	res.sendFile(path.join(publicPath, 'index.html'));
+app.get("/", (_req, res) => {
+	res.render(path.join(viewsPath, "index.html"), {
+		baseHref: config.base_url,
+	});
 });
+
+app.get("/edit", auth, (_req, res) => {
+	res.render(path.join(viewsPath, "edit.html"), {
+		baseHref: config.base_url,
+	});
+});
+
+app.get("/add", auth, (_req, res) => {
+	res.render(path.join(viewsPath, "add.html"), {
+		baseHref: config.base_url,
+	});
+});
+
+// ─────────────────────────────────────────────────────────────
+// DB CRUD operations
+// ─────────────────────────────────────────────────────────────
+
+app.use("/vct", auth, dbVctRouter);
 
 // ─────────────────────────────────────────────────────────────
 // Start server
