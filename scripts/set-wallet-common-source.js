@@ -61,6 +61,16 @@ if (consumers.length === 0) {
   process.exit(0);
 }
 
+function isLinked(pkgName, cwd) {
+  const pkgPath = path.join(cwd, 'node_modules', pkgName);
+
+  try {
+    return fs.lstatSync(pkgPath).isSymbolicLink();
+  } catch {
+    return false; // not installed or not linked
+  }
+}
+
 if (mode === 'local') {
   run('yarn', ['install', '--frozen-lockfile'], walletCommonPath);
   run('yarn', ['build'], walletCommonPath);
@@ -72,9 +82,18 @@ if (mode === 'local') {
   console.log(`Linked wallet-common into: ${consumers.join(', ')}`);
 } else {
   for (const dir of consumers) {
-    runOptional('yarn', ['unlink', 'wallet-common'], path.join(root, dir));
+    if (isLinked('wallet-common', path.join(root, dir))) {
+      console.log(`Unlinking wallet-common for ${dir}`);
+      runOptional('yarn', ['unlink', 'wallet-common'], path.join(root, dir));
+    } else {
+      console.log(`Skipping unlink wallet-common from ${dir} - not linked`);
+    }
   }
-  runOptional('yarn', ['unlink'], walletCommonPath);
+  if (isLinked('wallet-common', walletCommonPath)) {
+    runOptional('yarn', ['unlink'], walletCommonPath);
+  } else {
+      console.log(`Skipping unlink wallet-common from lib/wallet-common - not linked`);
+  }
   for (const dir of consumers) {
     run('yarn', ['install', '--frozen-lockfile'], path.join(root, dir));
   }

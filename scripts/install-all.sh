@@ -9,7 +9,7 @@ LIB="$ROOT/lib/wallet-common"
 for dir in */ ; do
   if [ -f "$dir/package.json" ]; then
     echo "Installing dependencies for $(basename $dir)"
-    (cd "$dir" && rm -rf node_modules && yarn install) &
+    (cd "$dir" && rm -rf node_modules && yarn install)
   fi
 done
 
