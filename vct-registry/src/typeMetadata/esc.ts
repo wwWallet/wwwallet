@@ -13,17 +13,17 @@ export const escMetadata = {
 			"rendering": {
 				"simple": {
 					"logo": {
-						"uri": config.url + "/images/diploma-logo.png",
-						"uri#integrity": createSRI("diploma-logo.png"),
+						"uri": config.url + "/images/esc-logo.png",
+						"uri#integrity": createSRI("esc-logo.png"),
 						"alt_text": "ESC Logo"
 					},
-					"background_color": "#b1d3ff",
-					"text_color": "#050708"
+					"background_color": "#dfe2ee",
+					"text_color": "#2c4390"
 				},
 				"svg_templates": [
 					{
-						"uri": config.url + "/images/diploma-svg-template.svg",
-						"uri#integrity": createSRI("diploma-svg-template.svg"),
+						"uri": config.url + "/images/esc-svg-template.svg",
+						"uri#integrity": createSRI("esc-svg-template.svg"),
 					}
 				],
 			}
