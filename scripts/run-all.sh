@@ -1,6 +1,16 @@
 #!/bin/bash
 
-docker compose up -d
+set -e
+
+docker compose up -d wallet-db
+
+# Start optional gateway only when the submodule is present
+if [ -f "privacy-gateway-server-go/Dockerfile" ]; then
+    docker compose up -d gateway
+else
+    echo "Warning: privacy-gateway-server-go/Dockerfile not found; skipping gateway startup."
+    echo "Run: git submodule update --init --recursive privacy-gateway-server-go"
+fi
 
 SERVICE=wallet-db
 echo "Waiting for $SERVICE to be healthy..."
