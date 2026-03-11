@@ -1,7 +1,3 @@
-export function clearEl(el) {
-	el.replaceChildren();
-}
-
 export async function fetchJson(url) {
 	const res = await fetch(url);
 	if (!res.ok) {
@@ -29,7 +25,7 @@ export function decodeVct(rawVct) {
 	return decodedVct;
 }
 
-export async function initializeEditor(container, validationFn, initialData) {
+export async function initializeEditor(container, validationFn, initialData, onContentChange) {
 
 	var schema = await fetchJson("type-metadata/schema");
 
@@ -46,6 +42,13 @@ export async function initializeEditor(container, validationFn, initialData) {
 				document.querySelector("#vct-submit-btn").disabled = false;
 			}
 		},
+		onChange() {
+			if (typeof onContentChange === "function") {
+				try {
+					onContentChange(editor.get());
+				} catch (_error) { }
+			}
+		},
 	};
 
 	const editor = new JSONEditor(container, options);
@@ -53,6 +56,21 @@ export async function initializeEditor(container, validationFn, initialData) {
 		editor.set(initialData);
 	}
 	return editor;
+}
+
+export async function requestMetadataPreview(metadata) {
+	const res = await fetch("vct/preview", {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ metadata }),
+	});
+
+	if (!res.ok) {
+		const body = await res.json().catch(() => ({}));
+		throw new Error(body?.message || "Failed to generate preview.");
+	}
+
+	return res.json();
 }
 
 
@@ -69,9 +87,7 @@ export function showSuccess(message) {
 export function showErrors(message, errors) {
 	const errorBox = document.getElementById("vct-error");
 	errorBox.hidden = false;
-	errorBox.textContent = `${message}.
-		The following errors were found:
-		${errors.message}`;
+	errorBox.textContent = `${message}\nThe following errors were found:\n${errors.message}`;
 
 	setTimeout(() => {
 		hideElement("vct-error");
@@ -83,16 +99,47 @@ function hideElement(elementId) {
 	element.hidden = true;
 }
 
-export async function login() {
-	try {
-        await fetch('auth/login', { credentials: 'include' });
-    } catch (_err) { }
+export async function login(username, password) {
+	const headers = {};
+
+	if (username && password) {
+		headers.Authorization = `Basic ${btoa(`${username}:${password}`)}`;
+	}
+
+	const res = await fetch("auth/login", {
+		credentials: "include",
+		headers: {
+			...headers,
+			"X-Requested-With": "XMLHttpRequest",
+		},
+	});
+
+	if (!res.ok) {
+		throw new Error("Invalid username or password.");
+	}
 }
 
 export async function logout() {
 	try {
 		await fetch('auth/logout', { credentials: 'include' });
 	} catch (err) { }
+}
+
+export async function getAuthState() {
+	try {
+		const res = await fetch("auth", { credentials: "include" });
+		if (!res.ok) {
+			return { loggedIn: false, username: "" };
+		}
+
+		const body = await res.json();
+		return {
+			loggedIn: true,
+			username: body?.username ?? "",
+		};
+	} catch (_err) {
+		return { loggedIn: false, username: "" };
+	}
 }
 
 export const initialAddVctData = {

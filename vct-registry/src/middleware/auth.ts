@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import crypto from "crypto";
 import { config } from "../../config";
-import { is } from "zod/v4/locales";
 
 const USERS = config.users;
 const COOKIE_NAME = "vctRegistrySessionId"
@@ -20,9 +19,12 @@ function generateSessionId() {
  * Middleware that performs basic authentication.
  */
 function basicAuth(req: Request, res: Response, next: NextFunction) {
+    const isProgrammaticLogin = req.get("X-Requested-With") === "XMLHttpRequest";
     const authHeader = req.headers['authorization'];
     if (!authHeader || !authHeader.startsWith('Basic ')) {
-        res.setHeader('WWW-Authenticate', 'Basic realm="Login Required"');
+        if (!isProgrammaticLogin) {
+            res.setHeader('WWW-Authenticate', 'Basic realm="Login Required"');
+        }
         return res.status(401).send('Authentication required.');
     }
 
@@ -34,12 +36,14 @@ function basicAuth(req: Request, res: Response, next: NextFunction) {
         (req as any).username = username;
         next();
     } else {
-        res.setHeader('WWW-Authenticate', 'Basic realm="Login Required"');
+        if (!isProgrammaticLogin) {
+            res.setHeader('WWW-Authenticate', 'Basic realm="Login Required"');
+        }
         return res.status(401).send('Invalid credentials.');
     }
 }
 
-function isValidSession(req: Request) {
+export function getSessionUsername(req: Request): string | null {
     const sessionId = req.cookies[COOKIE_NAME];
 
     if (sessionId && SESSIONS.has(sessionId)) {
@@ -60,7 +64,7 @@ function isValidSession(req: Request) {
  */
 export function login(req: Request, res: Response, next: NextFunction) {
 
-    const username = isValidSession(req);
+    const username = getSessionUsername(req);
     if (username) {
         (req as any).username = username;
         return next();
@@ -87,7 +91,7 @@ export function login(req: Request, res: Response, next: NextFunction) {
  */
 export function auth(req: Request, res: Response, next: NextFunction) {
 
-    const username = isValidSession(req);
+    const username = getSessionUsername(req);
     if (username) {
         (req as any).username = username;
         return next();
@@ -102,7 +106,7 @@ export function auth(req: Request, res: Response, next: NextFunction) {
  */
 export function authView(req: Request, res: Response, next: NextFunction) {
 
-    const username = isValidSession(req);
+    const username = getSessionUsername(req);
     if (username) {
         (req as any).username = username;
         return next();

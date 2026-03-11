@@ -1,9 +1,43 @@
-/* Controls */
+.metadata-layout {
+	display: grid;
+	grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+	gap: 16px;
+	align-items: start;
+}
+
+.metadata-selection-panel,
+.metadata-sidebar,
+.metadata-json-panel {
+	padding: 18px;
+}
+
+.metadata-selection-panel .metadata-panel-header {
+	margin-bottom: 10px;
+	text-align: center;
+}
+
+.metadata-header-action {
+	display: flex;
+	justify-content: center;
+	margin-top: -6px;
+}
+
+.metadata-selection-row {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+}
+
+.metadata-select-form {
+	flex: 1 1 560px;
+	max-width: 560px;
+}
+
 .vct-controls {
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
-	margin-bottom: 16px;
 }
 
 .select-label {
@@ -14,70 +48,18 @@
 	color: #374151;
 }
 
-.vct-select:focus {
-	outline: none;
-	border-color: #2563eb;
-	box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
-}
-
-/* Metadata summary box */
-.vct-meta {
-	font-size: 0.9rem;
-	background: #f9fafb;
-	border-radius: 8px;
-	padding: 12px;
-	border: 1px solid #e5e7eb;
-}
-
-.vct-meta div+div {
-	margin-top: 4px;
-}
-
-.vct-auth-button-container {
-	display: flex;
-	flex-direction: row;
-	gap: 8px;
-	margin: 12px auto;
-	width: 50%;
-}
-
-.vct-auth-btn {
+.vct-select {
 	width: 100%;
-	font-size: 0.8rem;
-	background: #f9fafb;
-	border-radius: 8px;
-	padding: 12px;
-	border: 1px solid #e5e7eb;
-	cursor: pointer;
-	transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
-.vct-auth-btn:enabled:hover {
-	background: #f3f4f6;
-	border-color: #d1d5db;
-}
-
-.vct-auth-btn.login:enabled:hover {
-	background: #d1fae5;
-	border-color: #a7f3d0;
-	color: #16a34a;
-}
-
-.vct-auth-btn.logout:enabled:hover {
-	background: #fee2e2;
-	border-color: #fecaca;
-	color: #991b1b;
-}
-
-/* JSON output box */
 .vct-data {
-	margin-top: 8px;
-	border-radius: 8px;
-	padding: 12px;
-	background: #f9fafb;
+	margin: 0;
+	border-radius: 12px;
+	padding: 14px;
+	background: #f8fafc;
 	border: 1px solid #e5e7eb;
 	color: #1f2937;
-	max-height: 480px;
+	max-height: 640px;
 	overflow: auto;
 	font-size: 0.85rem;
 	line-height: 1.4;
@@ -85,23 +67,42 @@
 		"Liberation Mono", "Courier New", monospace;
 }
 
-.vct-source {
-	font-size: 0.8rem;
-	color: #6b7280;
+.metadata-add-btn,
+.metadata-edit-btn {
+	width: auto;
 }
 
-.vct-add {
-	margin: 12px auto;
+.metadata-inline-error {
+	margin-top: -4px;
 }
 
+.metadata-delete-action {
+	margin-top: 4px;
+}
+
+.metadata-delete-action .vct-btn {
+	width: 100%;
+}
+
+a.vct-btn,
 a.vct-edit-btn {
 	text-decoration: none;
 	color: inherit;
 }
 
-/* Error + status */
 .status-text {
 	font-size: 0.9rem;
 	color: #6b7280;
 	margin-bottom: 12px;
+}
+
+@media (max-width: 860px) {
+	.metadata-layout {
+		grid-template-columns: 1fr;
+	}
+
+	.metadata-selection-row {
+		flex-direction: column;
+		align-items: stretch;
+	}
 }
