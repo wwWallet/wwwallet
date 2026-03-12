@@ -70,12 +70,24 @@
           </div>
           <div class="metadata-stat">
             <dt class="metadata-stat-label">Source</dt>
-            <dd class="metadata-stat-value metadata-stat-code"><code>GET {{ sourceUrl }}</code></dd>
+            <dd class="metadata-stat-value copy-inline-row metadata-stat-code">
+              <code id="metadata-source-value">GET {{ sourceUrl }}</code>
+              {% set copyTarget = "#metadata-source-value" %}
+              {% set copyLabel = "Copy source" %}
+              {% set copyButtonClass = "metadata-copy-btn" %}
+              {% include "../partials/copy-button.njk" %}
+            </dd>
           </div>
           {% elif selectedMetadata %}
           <div class="metadata-stat">
             <dt class="metadata-stat-label">VCT</dt>
-            <dd class="metadata-stat-value metadata-stat-code"><code>{{ selectedMetadata.vct }}</code></dd>
+            <dd class="metadata-stat-value copy-inline-row metadata-stat-code">
+              <code id="metadata-vct-value">{{ selectedMetadata.vct }}</code>
+              {% set copyTarget = "#metadata-vct-value" %}
+              {% set copyLabel = "Copy VCT" %}
+              {% set copyButtonClass = "metadata-copy-btn" %}
+              {% include "../partials/copy-button.njk" %}
+            </dd>
           </div>
           <div class="metadata-stat">
             <dt class="metadata-stat-label">Name</dt>
@@ -101,7 +113,13 @@
           {% endif %}
           <div class="metadata-stat">
             <dt class="metadata-stat-label">Source</dt>
-            <dd class="metadata-stat-value metadata-stat-code"><code>GET {{ sourceUrl }}</code></dd>
+            <dd class="metadata-stat-value copy-inline-row metadata-stat-code">
+              <code id="metadata-source-value">GET {{ sourceUrl }}</code>
+              {% set copyTarget = "#metadata-source-value" %}
+              {% set copyLabel = "Copy source" %}
+              {% set copyButtonClass = "metadata-copy-btn" %}
+              {% include "../partials/copy-button.njk" %}
+            </dd>
           </div>
           {% endif %}
         </dl>
@@ -113,10 +131,14 @@
     </section>
 
     <section class="card page-card metadata-json-panel">
-      <div class="metadata-panel-header">
+      <div class="metadata-panel-header metadata-json-header">
         <h3>Raw Metadata JSON</h3>
+        {% set copyTarget = "#vct-data" %}
+        {% set copyLabel = "Copy raw metadata JSON" %}
+        {% set copyButtonClass = "metadata-copy-btn metadata-json-copy-btn" %}
+        {% include "../partials/copy-button.njk" %}
       </div>
-      <pre id="vct-data" class="vct-data">{{ metadataJson }}</pre>
+      <pre id="vct-data" class="code-surface vct-data">{{ metadataJson }}</pre>
     </section>
   </div>
   <div class="metadata-inline-error">

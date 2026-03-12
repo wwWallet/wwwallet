@@ -11,6 +11,13 @@
 	padding: 18px;
 }
 
+.metadata-json-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
 .metadata-selection-panel .metadata-panel-header {
 	margin-bottom: 10px;
 	text-align: center;
@@ -53,11 +60,7 @@
 }
 
 .vct-data {
-	margin: 0;
-	border-radius: 12px;
 	padding: 14px;
-	background: #f8fafc;
-	border: 1px solid #e5e7eb;
 	color: #1f2937;
 	max-height: 640px;
 	overflow: auto;
