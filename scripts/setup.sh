@@ -29,6 +29,7 @@ cp wallet-frontend/.env.template wallet-frontend/.env
 cp wallet-issuer/.env.template wallet-issuer/.env
 cp wallet-as/.env.template wallet-as/.env
 cp wallet-verifier/.env.template wallet-verifier/.env
+cp vct-registry/.env.template vct-registry/.env
 
 # Create issuer certificates and keys
 rm -rf ./wallet-issuer/certs/ ./wallet-issuer/keys/
