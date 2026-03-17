@@ -1,129 +1,63 @@
-// src/server.ts
-import express from 'express';
-import cors from 'cors';
-import path from 'path';
-import { config } from '../config';
-import { ALL_METADATA } from './registry';
+import express from "express";
+import cors from "cors";
+import path from "path";
+import cookieParser from "cookie-parser";
+import { config } from "../config";
+import knexConfig from "../knexfile";
+import { auth } from "./middleware/auth";
+import { knex } from "knex";
+import { initVctTable } from "./db/vct";
+import apiRouter from "./routes/api";
+import typeMetadataRouter from "./routes/typeMetadata";
+import dbVctRouter from "./routes/db";
+import nunjucks from "nunjucks";
+import authRouter from "./routes/auth";
+import viewsRouter from "./routes/views";
 
-const app = express();
-const PORT = config.port;
+const { url, port } = config;
+
+export const app = express();
 
 app.use(cors());
+app.use(cookieParser())
+app.use(express.json({
+	limit: config.max_vct_size
+}));
 
-// ─────────────────────────────────────────────────────────────
-// Basic info endpoints
-// ─────────────────────────────────────────────────────────────
+export const db = knex(knexConfig);
+initVctTable(db);
 
-app.get('/api/health', (_req, res) => {
-	res.json({
-		status: 'ok',
-		uptime: process.uptime(),
-		timestamp: new Date().toISOString(),
-	});
+const publicPath = path.join(__dirname, "../public");
+export const viewsPath = path.join(__dirname, "views");
+
+nunjucks.configure(viewsPath, {
+    autoescape: true,
+    express: app
 });
-
-app.get('/api/info', (_req, res) => {
-	res.json({
-		name: 'vct-registry',
-		version: '1.0.0',
-		description: 'Express + TypeScript app for local VCT registry metadata.',
-	});
-});
-
-app.get('/api/time', (_req, res) => {
-	res.json({
-		now: new Date().toISOString(),
-		timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-	});
-});
-
-// ─────────────────────────────────────────────────────────────
-// VCT registry API (VCT-focused)
-// ─────────────────────────────────────────────────────────────
-
-/**
- * GET /api/vct
- * Returns a simple list of all VCTs + names.
- */
-app.get('/api/vct', (_req, res) => {
-	const list = ALL_METADATA.map((meta) => ({
-		vct: meta.vct,
-		name: meta.name,
-	}));
-
-	res.json(list);
-});
-
-// ─────────────────────────────────────────────────────────────
-// VCT API compatible with demo-issuer style (by vct)
-// ─────────────────────────────────────────────────────────────
-
-/**
- * GET /type-metadata?vct=urn:...
- * Returns the metadata object whose .vct matches the query.
- */
-app.get('/type-metadata', (req, res) => {
-	const vct = typeof req.query.vct === 'string'
-		? decodeURIComponent(req.query.vct).trim()
-		: undefined;
-
-	if (!vct || typeof vct !== 'string') {
-		return res.status(400).json({
-			error: 'missing_vct',
-			message: 'Query parameter "vct" is required',
-		});
-	}
-
-	const metadata = ALL_METADATA.find((m) => m.vct === vct);
-
-	if (!metadata) {
-		return res.status(404).json({
-			error: 'unknown_vct',
-			message: `No metadata found for vct "${vct}"`,
-		});
-	}
-
-	res.json(metadata);
-});
-
-/**
- * GET /type-metadata/all
- * Returns an array of all metadata objects.
- */
-app.get('/type-metadata/all', (_req, res) => {
-	res.json(ALL_METADATA);
-});
-
-// ─────────────────────────────────────────────────────────────
-// Static frontend
-// ─────────────────────────────────────────────────────────────
-
-const publicPath = path.join(__dirname, '../public');
+app.set("view engine", "njk");
 
 // 1-day immutable cache for images
 app.use(
-	'/images',
-	express.static(path.join(publicPath, 'images'), {
-		maxAge: '1d',
+	"/images",
+	express.static(path.join(publicPath, "images"), {
+		maxAge: "1d",
 		immutable: true,
-	})
+	}),
 );
 
 // No caching for the rest of the UI (HTML, JS, CSS)
 app.use(
 	express.static(publicPath, {
 		maxAge: 0,
-	})
+	}),
 );
 
-app.get('/', (_req, res) => {
-	res.sendFile(path.join(publicPath, 'index.html'));
-});
+app.use("/", viewsRouter);
+app.use("/api", apiRouter);
+app.use("/auth", authRouter);
+app.use("/type-metadata", typeMetadataRouter);
+app.use("/vct", auth, dbVctRouter);
 
-// ─────────────────────────────────────────────────────────────
-// Start server
-// ─────────────────────────────────────────────────────────────
-
-app.listen(PORT, () => {
-	console.log(`✅ vct-registry server listening at http://localhost:${PORT}`);
+app.listen(port, () => {
+	console.log(`✅ vct-registry server listening at ${url}`);
 });
