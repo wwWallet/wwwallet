@@ -1,15 +1,15 @@
 import { config } from "../../config";
-import { createSRI } from "../sriGenerator";
+import { createSRI } from "../../src/sriGenerator";
 
-export const diplomaMetadata = {
-	"vct": 'urn:credential:diploma',
-	"name": "Diploma VC Type Metadata",
-	"description": "This is a Bachelor Diploma verifiable credential",
+export const testVCTypeMetadata = {
+	"vct": 'urn:vct:test',
+	"name": "Test Metadata",
+	"description": "This is a Test verifiable credential type metadata file, based on urn:credential:diploma",
 	"display": [
 		{
 			"locale": "en-US",
-			"name": "Diploma",
-			"description": "Bachelor Diploma SD-JWT VC",
+			"name": "Test",
+			"description": "Test SD-JWT VC",
 			"rendering": {
 				"simple": {
 					"logo": {
