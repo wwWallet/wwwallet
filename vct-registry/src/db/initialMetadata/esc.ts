@@ -22,8 +22,18 @@ export const escMetadata = {
 				},
 				"svg_templates": [
 					{
+						"uri": config.url + "/images/esc-svg-template-landscape.svg",
+						"uri#integrity": createSRI("esc-svg-template-landscape.svg"),
+						"properties": {
+							"orientation": "landscape"
+						}
+					},
+					{
 						"uri": config.url + "/images/esc-svg-template.svg",
 						"uri#integrity": createSRI("esc-svg-template.svg"),
+						"properties": {
+							"orientation": "portrait"
+						}
 					}
 				],
 			}
@@ -36,7 +46,7 @@ export const escMetadata = {
 				{
 					"locale": "en-US",
 					"label": "Given Name",
-					"description": "The given name of the Diploma Holder"
+					"description": "The given name of the student."
 				}
 			],
 			"svg_id": "firstNameEn"
@@ -47,15 +57,13 @@ export const escMetadata = {
 				{
 					"locale": "en-US",
 					"label": "Family Name",
-					"description": "The family name of the Diploma Holder"
+					"description": "The family name of the student."
 				}
 			],
 			"svg_id": "lastNameEn"
 		},
 		{
-			"path": [
-				"photo"
-			],
+			"path": ["photo"],
 			"sd": "always",
 			"svg_id": "photo",
 			"display": [
@@ -66,9 +74,7 @@ export const escMetadata = {
 			]
 		},
 		{
-			"path": [
-				"QRCode"
-			],
+			"path": ["QRCode"],
 			"sd": "always",
 			"svg_id": "QRCode",
 			"display": [
@@ -128,14 +134,62 @@ export const escMetadata = {
 			]
 		},
 		{
-			"path": ["age_in_years"],
+			"path": ["displayName"],
 			"mandatory": true,
 			"sd": "always",
 			"display": [
 				{
 					"locale": "en-US",
-					"label": "Age",
-					"description": "Person's age in completed years."
+					"label": "Display Name",
+					"description": "Human-readable name of the credential."
+				}
+			]
+		},
+		{
+			"path": ["institutionName"],
+			"mandatory": true,
+			"sd": "always",
+			"display": [
+				{
+					"locale": "en-US",
+					"label": "Institution Name",
+					"description": "Name of the issuing institution."
+				}
+			]
+		},
+		{
+			"path": ["schacHomeOrganization"],
+			"mandatory": true,
+			"sd": "always",
+			"display": [
+				{
+					"locale": "en-US",
+					"label": "Home Organization",
+					"description": "SCHAC home organization identifier."
+				}
+			]
+		},
+		{
+			"path": ["fullLabel"],
+			"mandatory": true,
+			"sd": "always",
+			"display": [
+				{
+					"locale": "en-US",
+					"label": "Full Label",
+					"description": "Full label combining institution and credential information."
+				}
+			]
+		},
+		{
+			"path": ["academicLevel"],
+			"mandatory": true,
+			"sd": "always",
+			"display": [
+				{
+					"locale": "en-US",
+					"label": "Academic Level",
+					"description": "Academic level of the student."
 				}
 			]
 		},
@@ -193,7 +247,7 @@ export const escMetadata = {
 			"sd": "always",
 			"display": [
 				{
-					"locale": "en-US",
+					"locale": "el",
 					"label": "Department (Greek)",
 					"description": "Name of the department in Greek."
 				}
@@ -243,31 +297,7 @@ export const escMetadata = {
 				{
 					"locale": "en-US",
 					"label": "Enrollment Type",
-					"description": "Type of enrollment (e.g., undergraduate, postgraduate)."
-				}
-			]
-		},
-		{
-			"path": ["fatherFirstNameEl"],
-			"mandatory": true,
-			"sd": "always",
-			"display": [
-				{
-					"locale": "en-US",
-					"label": "Father's First Name (Greek)",
-					"description": "Father's first name in Greek."
-				}
-			]
-		},
-		{
-			"path": ["fatherFirstNameEn"],
-			"mandatory": true,
-			"sd": "always",
-			"display": [
-				{
-					"locale": "en-US",
-					"label": "Father's First Name (English)",
-					"description": "Father's first name in English."
+					"description": "Type of enrollment."
 				}
 			]
 		},
@@ -277,7 +307,7 @@ export const escMetadata = {
 			"sd": "always",
 			"display": [
 				{
-					"locale": "en-US",
+					"locale": "el",
 					"label": "First Name (Greek)",
 					"description": "Student's first name in Greek."
 				}
@@ -313,7 +343,7 @@ export const escMetadata = {
 			"sd": "always",
 			"display": [
 				{
-					"locale": "en-US",
+					"locale": "el",
 					"label": "Last Name (Greek)",
 					"description": "Student's last name in Greek."
 				}
@@ -325,7 +355,7 @@ export const escMetadata = {
 			"sd": "always",
 			"display": [
 				{
-					"locale": "en-US",
+					"locale": "el",
 					"label": "Middle Name (Greek)",
 					"description": "Student's middle name in Greek."
 				}
@@ -349,7 +379,7 @@ export const escMetadata = {
 			"sd": "always",
 			"display": [
 				{
-					"locale": "en-US",
+					"locale": "el",
 					"label": "Program (Greek)",
 					"description": "Name of the academic program in Greek."
 				}
@@ -390,54 +420,6 @@ export const escMetadata = {
 					"description": "Student's registration identifier."
 				}
 			]
-		},
-		{
-			"path": ["ssn"],
-			"mandatory": true,
-			"sd": "always",
-			"display": [
-				{
-					"locale": "en-US",
-					"label": "Social Security Number",
-					"description": "Student's social security number."
-				}
-			]
-		},
-		{
-			"path": ["ssnCountry"],
-			"mandatory": true,
-			"sd": "always",
-			"display": [
-				{
-					"locale": "en-US",
-					"label": "SSN Country",
-					"description": "Country of the social security number."
-				}
-			]
-		},
-		{
-			"path": ["tin"],
-			"mandatory": true,
-			"sd": "always",
-			"display": [
-				{
-					"locale": "en-US",
-					"label": "Tax Identification Number",
-					"description": "Student's tax identification number."
-				}
-			]
-		},
-		{
-			"path": ["tinCountry"],
-			"mandatory": true,
-			"sd": "always",
-			"display": [
-				{
-					"locale": "en-US",
-					"label": "TIN Country",
-					"description": "Country of the tax identification number."
-				}
-			]
-		},
-	],
+		}
+	]
 }
