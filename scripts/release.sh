@@ -10,10 +10,26 @@ WALLET_COMMON_REPOSITORY="wwwallet/wallet-common"
 
 prod_release=0   # this flag determines if --prerelease flag should be used in gh cli
 
+print_help() {
+  cat <<EOF
+Usage: $0 -v <version> [-p] [-h]
+
+Options:
+  -v <version>  Required release tag (must start with 'v', e.g. v0.5.1)
+  -p            Use production release type (default is prerelease)
+  -h            Show this help message
+
+Behavior:
+  - Creates draft releases in all configured repositories
+  - Prompts: Type 'release' to publish:
+  - Typing 'release' publishes drafts; anything else leaves them as drafts
+EOF
+}
+
 while getopts "hv:p" opt; do
   case $opt in
     h)
-      echo "Usage: $0 -v version"
+      print_help
       exit 0
       ;;
     v)
@@ -24,6 +40,7 @@ while getopts "hv:p" opt; do
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
+      print_help
       exit 1
       ;;
   esac
