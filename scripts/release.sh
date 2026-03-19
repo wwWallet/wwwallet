@@ -1,4 +1,5 @@
 #!/bin/bash
+
 WWWALLET_REPOSITORY="wwwallet/wwwallet"
 WALLET_FRONTEND_REPOSITORY="wwwallet/wallet-frontend"
 WALLET_BACKEND_REPOSITORY="wwwallet/wallet-backend-server"
@@ -9,17 +10,17 @@ WALLET_COMMON_REPOSITORY="wwwallet/wallet-common"
 
 prod_release=0   # this flag determines if --prerelease flag should be used in gh cli
 
-while getopts "h:v:p" opt; do
+while getopts "hv:p" opt; do
   case $opt in
     h)
-      echo "Usage: $0 --v version"
+      echo "Usage: $0 -v version"
       exit 0
       ;;
     v)
       ver="$OPTARG"
       ;;
     p)
-      prod_release=0
+      prod_release=1
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
@@ -50,7 +51,6 @@ gh release create ${ver} --generate-notes --title "${title}" ${pre_release_flag}
 gh release create ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WALLET_AS_REPOSITORY}" --draft
 gh release create ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WALLET_ISSUER_REPOSITORY}" --draft
 gh release create ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WALLET_VERIFIER_REPOSITORY}" --draft
-gh release create ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WALLET_VERIFIER_REPOSITORY}" --draft
 gh release create ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WALLET_COMMON_REPOSITORY}" --draft
 gh release create ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WWWALLET_REPOSITORY}" --draft
 
@@ -65,7 +65,6 @@ if [ "$response" = "release" ]; then
 	gh release edit ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WALLET_BACKEND_REPOSITORY}" --draft=false
 	gh release edit ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WALLET_AS_REPOSITORY}" --draft=false
 	gh release edit ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WALLET_ISSUER_REPOSITORY}" --draft=false
-	gh release edit ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WALLET_VERIFIER_REPOSITORY}" --draft=false
 	gh release edit ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WALLET_VERIFIER_REPOSITORY}" --draft=false
 	gh release edit ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WALLET_COMMON_REPOSITORY}" --draft=false
 	gh release edit ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WWWALLET_REPOSITORY}" --draft=false
