@@ -8,25 +8,20 @@ WALLET_ISSUER_REPOSITORY="wwwallet/wallet-issuer"
 WALLET_VERIFIER_REPOSITORY="wwwallet/wallet-verifier"
 WALLET_COMMON_REPOSITORY="wwwallet/wallet-common"
 
-prod_release=0   # this flag determines if --prerelease flag should be used in gh cli
-
 print_help() {
   cat <<EOF
-Usage: $0 -v <version> [-p] [-h]
+Usage: $0 -v <version> [-h]
 
 Options:
   -v <version>  Required release tag (must start with 'v', e.g. v0.5.1)
-  -p            Use production release type (default is prerelease)
   -h            Show this help message
 
 Behavior:
-  - Creates draft releases in all configured repositories
-  - Prompts: Type 'release' to publish:
-  - Typing 'release' publishes drafts; anything else leaves them as drafts
+  - Creates draft prereleases in all configured repositories
 EOF
 }
 
-while getopts "hv:p" opt; do
+while getopts "hv:" opt; do
   case $opt in
     h)
       print_help
@@ -34,9 +29,6 @@ while getopts "hv:p" opt; do
       ;;
     v)
       ver="$OPTARG"
-      ;;
-    p)
-      prod_release=1
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
@@ -59,33 +51,14 @@ fi
 
 title=$ver
 
-[ "$prod_release" -eq 0 ] && pre_release_flag="--prerelease" || pre_release_flag=""
-
 echo "Creating draft releases..."
 
-gh release create ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WALLET_FRONTEND_REPOSITORY}" --draft
-gh release create ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WALLET_BACKEND_REPOSITORY}" --draft
-gh release create ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WALLET_AS_REPOSITORY}" --draft
-gh release create ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WALLET_ISSUER_REPOSITORY}" --draft
-gh release create ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WALLET_VERIFIER_REPOSITORY}" --draft
-gh release create ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WALLET_COMMON_REPOSITORY}" --draft
-gh release create ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WWWALLET_REPOSITORY}" --draft
+gh release create ${ver} --generate-notes --title "${title}" --prerelease --repo "${WALLET_FRONTEND_REPOSITORY}" --draft
+gh release create ${ver} --generate-notes --title "${title}" --prerelease --repo "${WALLET_BACKEND_REPOSITORY}" --draft
+gh release create ${ver} --generate-notes --title "${title}" --prerelease --repo "${WALLET_AS_REPOSITORY}" --draft
+gh release create ${ver} --generate-notes --title "${title}" --prerelease --repo "${WALLET_ISSUER_REPOSITORY}" --draft
+gh release create ${ver} --generate-notes --title "${title}" --prerelease --repo "${WALLET_VERIFIER_REPOSITORY}" --draft
+gh release create ${ver} --generate-notes --title "${title}" --prerelease --repo "${WALLET_COMMON_REPOSITORY}" --draft
+gh release create ${ver} --generate-notes --title "${title}" --prerelease --repo "${WWWALLET_REPOSITORY}" --draft
 
 echo "Drafts created..."
-
-echo -n "Type 'release' to publish: "
-read response
-
-if [ "$response" = "release" ]; then
-	echo "Creating release..."
-	gh release edit ${ver} --title "${title}" ${pre_release_flag} --repo "${WALLET_FRONTEND_REPOSITORY}" --draft=false
-	gh release edit ${ver} --title "${title}" ${pre_release_flag} --repo "${WALLET_BACKEND_REPOSITORY}" --draft=false
-	gh release edit ${ver} --title "${title}" ${pre_release_flag} --repo "${WALLET_AS_REPOSITORY}" --draft=false
-	gh release edit ${ver} --title "${title}" ${pre_release_flag} --repo "${WALLET_ISSUER_REPOSITORY}" --draft=false
-	gh release edit ${ver} --title "${title}" ${pre_release_flag} --repo "${WALLET_VERIFIER_REPOSITORY}" --draft=false
-	gh release edit ${ver} --title "${title}" ${pre_release_flag} --repo "${WALLET_COMMON_REPOSITORY}" --draft=false
-	gh release edit ${ver} --title "${title}" ${pre_release_flag} --repo "${WWWALLET_REPOSITORY}" --draft=false
-else
-	echo "Release cancelled."
-    exit 0
-fi
