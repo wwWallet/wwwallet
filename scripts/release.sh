@@ -78,13 +78,13 @@ read response
 
 if [ "$response" = "release" ]; then
 	echo "Creating release..."
-	gh release edit ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WALLET_FRONTEND_REPOSITORY}" --draft=false
-	gh release edit ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WALLET_BACKEND_REPOSITORY}" --draft=false
-	gh release edit ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WALLET_AS_REPOSITORY}" --draft=false
-	gh release edit ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WALLET_ISSUER_REPOSITORY}" --draft=false
-	gh release edit ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WALLET_VERIFIER_REPOSITORY}" --draft=false
-	gh release edit ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WALLET_COMMON_REPOSITORY}" --draft=false
-	gh release edit ${ver} --generate-notes --title "${title}" ${pre_release_flag} --repo "${WWWALLET_REPOSITORY}" --draft=false
+	gh release edit ${ver} --title "${title}" ${pre_release_flag} --repo "${WALLET_FRONTEND_REPOSITORY}" --draft=false
+	gh release edit ${ver} --title "${title}" ${pre_release_flag} --repo "${WALLET_BACKEND_REPOSITORY}" --draft=false
+	gh release edit ${ver} --title "${title}" ${pre_release_flag} --repo "${WALLET_AS_REPOSITORY}" --draft=false
+	gh release edit ${ver} --title "${title}" ${pre_release_flag} --repo "${WALLET_ISSUER_REPOSITORY}" --draft=false
+	gh release edit ${ver} --title "${title}" ${pre_release_flag} --repo "${WALLET_VERIFIER_REPOSITORY}" --draft=false
+	gh release edit ${ver} --title "${title}" ${pre_release_flag} --repo "${WALLET_COMMON_REPOSITORY}" --draft=false
+	gh release edit ${ver} --title "${title}" ${pre_release_flag} --repo "${WWWALLET_REPOSITORY}" --draft=false
 else
 	echo "Release cancelled."
     exit 0
