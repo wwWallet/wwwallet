@@ -20,6 +20,7 @@
     "migrate-vct-registry": "(cd vct-registry/ && yarn migration:run)",
     "gen-iaca-keys": "./scripts/gen-iaca-keys.sh",
     "gen-dsc-keys": "./scripts/gen-dsc-keys.sh",
-    "install:precommit-hooks": "./scripts/install-precommit-hooks.sh"
+    "install:precommit-hooks": "./scripts/install-precommit-hooks.sh",
+    "gen-release": "./scripts/release.sh"
   }
 }
