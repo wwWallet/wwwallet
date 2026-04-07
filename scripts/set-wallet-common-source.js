@@ -8,10 +8,12 @@ const path = require('path');
 const root = path.resolve(__dirname, '..');
 const walletCommonPath = path.join(root, 'lib', 'wallet-common');
 const mode = process.argv[2];
+const options = new Set(process.argv.slice(3));
+const skipInstall = options.has('--skip-install');
 const allowedModes = new Set(['local', 'default']);
 
 if (!allowedModes.has(mode)) {
-  console.error('Usage: node scripts/set-wallet-common-source.js <local|default>');
+  console.error('Usage: node scripts/set-wallet-common-source.js <local|default> [--skip-install]');
   process.exit(1);
 }
 
@@ -72,8 +74,10 @@ function isLinked(pkgName, cwd) {
 }
 
 if (mode === 'local') {
-  run('yarn', ['install', '--frozen-lockfile'], walletCommonPath);
-  run('yarn', ['build'], walletCommonPath);
+  if (!skipInstall) {
+    run('yarn', ['install', '--frozen-lockfile'], walletCommonPath);
+    run('yarn', ['build'], walletCommonPath);
+  }
   run('yarn', ['link'], walletCommonPath);
   for (const dir of consumers) {
     console.log(`Linked wallet-common path: ${path.join(root, dir)}`);
@@ -92,10 +96,12 @@ if (mode === 'local') {
   if (isLinked('wallet-common', walletCommonPath)) {
     runOptional('yarn', ['unlink'], walletCommonPath);
   } else {
-      console.log(`Skipping unlink wallet-common from lib/wallet-common - not linked`);
+    console.log(`Skipping unlink wallet-common from lib/wallet-common - not linked`);
   }
-  for (const dir of consumers) {
-    run('yarn', ['install', '--frozen-lockfile'], path.join(root, dir));
+  if (!skipInstall) {
+    for (const dir of consumers) {
+      run('yarn', ['install', '--frozen-lockfile'], path.join(root, dir));
+    }
   }
   console.log(`Restored wallet-common from package.json in: ${consumers.join(', ')}`);
 }

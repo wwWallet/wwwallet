@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 ROOT=$(pwd)
 LIB="$ROOT/lib/wallet-common"
 
@@ -9,14 +11,12 @@ LIB="$ROOT/lib/wallet-common"
 for dir in */ ; do
   if [ -f "$dir/package.json" ]; then
     echo "Installing dependencies for $(basename $dir)"
-    (cd "$dir" && rm -rf node_modules && yarn install)
+    (cd "$dir" && rm -rf node_modules && yarn install --frozen-lockfile)
   fi
 done
 
-wait
-
 if [ "${WALLET_COMMON_SOURCE}" = "local" ]; then
-  node ./scripts/set-wallet-common-source.js local
+  node ./scripts/set-wallet-common-source.js local --skip-install
 elif [ "${WALLET_COMMON_SOURCE}" = "default" ]; then
-  node ./scripts/set-wallet-common-source.js default
+  node ./scripts/set-wallet-common-source.js default --skip-install
 fi
