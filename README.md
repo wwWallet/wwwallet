@@ -36,8 +36,10 @@ wwWallet is a modular reference implementation for verifiable credentials, provi
    ```
 ### First-time Setup
 5. Initialize DB:
-	- Uploads IACA certificat generated from step 3. to the database of the wallet
+	- Uploads IACA certificate generated from step 3. to the database of the wallet
 	- Registers issuer and verifier in the database of the wallet
+   - Initializes wallet-verifier database
+   - Initializes vct-registry database
 	```sh
    yarn init-db
    ```
