@@ -51,8 +51,12 @@ services:
     container_name: kv-store
     ports:
       - "6379:6379"
+    command:
+      - valkey-server
+      - --requirepass
+      - secret
     healthcheck:
-      test: ["CMD", "valkey-cli", "ping"]
+      test: ["CMD", "valkey-cli", "-a", "secret", "ping"]
       start_period: 60s
       #start_interval: 5s  # Not yet supported it seems, but upcoming: https://github.com/docker/compose/issues/10830
       interval: 5s         # Delete this line when start_interval becomes supported
