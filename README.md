@@ -8,6 +8,7 @@ wwWallet is a modular reference implementation for verifiable credentials, provi
 - `wallet-issuer` — Issuer ([wallet-issuer/README.md](https://github.com/wwWallet/wallet-issuer/blob/master/README.md))
 - `wallet-verifier` — Verifier ([wallet-verifier/README.md](https://github.com/wwWallet/wallet-verifier/blob/master/README.md))
 - `wallet-as` — Authorization Server ([wallet-as/README.md](https://github.com/wwWallet/wallet-as/blob/master/README.md))
+- `vct-registry` — SD-JWT VC Type Metadata Registry ([vct-registry/README.md](https://github.com/wwWallet/vct-registry/blob/master/README.md))
 - `lib/wallet-common` — Shared library ([wallet-common/README.md](https://github.com/wwWallet/wallet-common/blob/master/README.md))
 
 
