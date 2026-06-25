@@ -31,10 +31,12 @@ while true; do
     sleep 2
 done
 
+FRONTEND_CMD="${FRONTEND_CMD:-npm --prefix wallet-frontend run dev}"
+
 yarn concurrently \
     --names "wallet-frontend,wallet-backend-server,wallet-issuer,wallet-verifier,vct-registry,wallet-as" \
     --prefix-colors "blueBright,greenBright,yellowBright,magentaBright,cyanBright,blue" \
-    "npm --prefix wallet-frontend run dev" \
+    "$FRONTEND_CMD" \
     "npm --prefix wallet-backend-server run dev" \
     "npm --prefix wallet-issuer run dev" \
     "npm --prefix wallet-verifier run dev" \
