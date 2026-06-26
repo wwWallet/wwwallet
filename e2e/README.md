@@ -88,7 +88,12 @@ Add new spec files under `tests/`. Each test gets its own isolated browser conte
   already be issued first, and only applies to scopes other than PID itself. See
   `tests/issue-credential-sign-in-with-pid.spec.ts`.
 - `presentCredentialsToVerifier(page, definitionTitle)` — drives an OpenID4VP presentation to
-  `wallet-verifier` (`:8005`), from picking a request definition on its site (e.g. `"PID + EHIC"`)
-  through the wallet's credential-selection popup, ending on the verifier's own result page. The
-  account needs to already hold whatever credential types that definition requests. See
-  `tests/present-credentials-to-verifier.spec.ts`.
+  `wallet-verifier` (`:8005`), from picking a fixed-combo request definition on its site (e.g.
+  `"PID + EHIC"`) through the wallet's credential-selection popup, ending on the verifier's own
+  result page. The account needs to already hold whatever credential types that definition
+  requests.
+- `presentSelectableCredentialToVerifier(page, definitionTitle, fields)` — same, but for one of the
+  three definitions where the verifier first lets you pick which claims to request (`"PID"`,
+  `"Bachelor Diploma"`, `"EHIC"`); `fields` is `'all'` or `'one'`. See
+  `tests/present-credentials-to-verifier.spec.ts`, which covers all 9 of wallet-verifier's standard
+  definitions (the QES/QC transaction-data and custom-DCQL ones aren't covered).

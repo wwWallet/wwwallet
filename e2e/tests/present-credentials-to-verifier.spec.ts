@@ -1,14 +1,27 @@
 import { test, expect } from '@playwright/test';
-import { signUpNewWallet, issueCredential, presentCredentialsToVerifier } from './helpers';
+import { signUpNewWallet, issueCredential, presentCredentialsToVerifier, presentSelectableCredentialToVerifier } from './helpers';
 
-test('presents PID and EHIC to the verifier', async ({ page, context }) => {
+// Every definition on wallet-verifier's catalog that doesn't need extra
+// setup beyond holding the right credentials (the QES/QC transaction-data
+// and custom-DCQL definitions aren't covered).
+
+test('presents every standard verifier definition', async ({ page, context }) => {
 	await signUpNewWallet(page, context);
 
-	await issueCredential(page, 'PID');
-	await expect(page.getByRole('button', { name: 'PID', exact: true })).toBeVisible({ timeout: 20_000 });
-	await issueCredential(page, 'EHIC');
-	await expect(page.getByRole('button', { name: 'EHIC', exact: true })).toBeVisible({ timeout: 20_000 });
+	for (const credentialName of ['PID', 'EHIC', 'POR', 'Diploma']) {
+		await issueCredential(page, credentialName);
+		await expect(page.getByRole('button', { name: credentialName, exact: true })).toBeVisible({ timeout: 20_000 });
+	}
 
-	await presentCredentialsToVerifier(page, 'PID + EHIC');
-	await expect(page.getByRole('heading', { name: 'Presentation Successful' })).toBeVisible({ timeout: 20_000 });
+	for (const definitionTitle of ['PID + EHIC', 'PID + POR', 'PID + Diploma']) {
+		await presentCredentialsToVerifier(page, definitionTitle);
+		await expect(page.getByRole('heading', { name: 'Presentation Successful' })).toBeVisible({ timeout: 20_000 });
+	}
+
+	for (const definitionTitle of ['PID', 'Bachelor Diploma', 'EHIC']) {
+		for (const fields of ['all', 'one'] as const) {
+			await presentSelectableCredentialToVerifier(page, definitionTitle, fields);
+			await expect(page.getByRole('heading', { name: 'Presentation Successful' })).toBeVisible({ timeout: 20_000 });
+		}
+	}
 });
