@@ -98,26 +98,65 @@ export async function deleteAccount(page: Page): Promise<void> {
 	await page.waitForURL((url) => url.pathname.startsWith('/login'), { timeout: 20_000 });
 }
 
-// Drives the part of the OpenID4VCI authorization code flow shared by every
-// way of starting issuance (the /add list, an issuer's own "Open in
-// wwWallet" link, or scanning the issuer's QR code): the wallet's own
-// redirect-consent popup, then wallet-as login/consent, ending back on the
-// wallet's home page.
-async function completeWalletAsAuthorization(page: Page): Promise<void> {
+// Clicks through the wallet's own redirect-consent popup onto wallet-as's
+// login page. Shared by every way of starting issuance (the /add list, an
+// issuer's own "Open in wwWallet" link, or scanning the issuer's QR code).
+async function clickContinueRedirectPopup(page: Page): Promise<void> {
 	await page.locator('#continue-redirect-popup').click();
-
 	// Full-page redirect to wallet-as (the authorization server) for login.
 	await page.waitForURL(/localhost:6060\/interaction\//, { timeout: 20_000 });
+}
+
+// Approves wallet-as's consent screen, ending back on the wallet's home
+// page. Shared by every wallet-as login method (username/password, PID
+// sign-in).
+async function approveWalletAsConsent(page: Page): Promise<void> {
+	await page.getByRole('button', { name: 'Authorize' }).click();
+	await page.waitForURL(/localhost:3000\//, { timeout: 20_000 });
+}
+
+// Drives the part of the OpenID4VCI authorization code flow shared by every
+// way of starting issuance: the wallet's own redirect-consent popup, then
+// wallet-as login (demo username/password) and consent, ending back on the
+// wallet's home page.
+async function completeWalletAsAuthorization(page: Page): Promise<void> {
+	await clickContinueRedirectPopup(page);
+
 	await page.locator('#login').fill('test');
 	await page.locator('#password').fill('test');
 	// Some scopes (e.g. diploma, ehic, por) also offer a "Sign in with PID"
 	// secondary button sharing the same class, so match on exact text instead.
 	await page.getByRole('button', { name: 'Sign in', exact: true }).click();
 
-	// wallet-as then asks for consent before redirecting back to the wallet.
-	await page.getByRole('button', { name: 'Authorize' }).click();
+	await approveWalletAsConsent(page);
+}
 
-	await page.waitForURL(/localhost:3000\//, { timeout: 20_000 });
+// Same as completeWalletAsAuthorization, but logs into wallet-as with the
+// "Sign in with PID" alternative instead of typing the demo
+// username/password: an OpenID4VP presentation of a PID credential the
+// account already holds (see issueCredential(page, 'PID')), handled by the
+// wallet's ordinary verifier credential-selection popup. wallet-as only
+// offers this for scopes other than PID itself (see its
+// util/pidAuthEligibility.ts), so it isn't available when issuing PID.
+async function completeWalletAsAuthorizationWithPidSignIn(page: Page): Promise<void> {
+	await clickContinueRedirectPopup(page);
+
+	await page.getByRole('button', { name: 'Sign in with PID' }).click();
+
+	// wallet-as redirects to the wallet with an OpenID4VP request for the PID;
+	// the wallet handles it with the same credential-selection popup any
+	// verifier request would trigger.
+	await page.waitForURL(/localhost:3000\/\?/, { timeout: 20_000 });
+	await page.locator('#next-select-credentials').click();
+	await page.locator('[id^="slider-select-credentials-"]').first().click();
+	await page.locator('#next-select-credentials').click();
+	await page.locator('#send-select-credentials').click();
+
+	// Sending the presentation redirects back to wallet-as's PID callback
+	// page, which auto-submits and lands on the same consent screen the
+	// username/password flow would.
+	await page.waitForURL(/localhost:6060\/interaction\//, { timeout: 20_000 });
+	await approveWalletAsConsent(page);
 }
 
 // Drives the full OpenID4VCI authorization code flow for one credential type,
@@ -131,6 +170,16 @@ export async function issueCredential(page: Page, listName: string): Promise<voi
 	await page.goto('/add');
 	await page.getByRole('button').filter({ has: page.getByText(listName, { exact: true }) }).click();
 	await completeWalletAsAuthorization(page);
+}
+
+// Same as issueCredential, but signs into wallet-as with an existing PID
+// instead of the demo username/password (see
+// completeWalletAsAuthorizationWithPidSignIn). The account must already hold
+// a PID credential, and `listName` must be a type other than PID itself.
+export async function issueCredentialUsingPidSignIn(page: Page, listName: string): Promise<void> {
+	await page.goto('/add');
+	await page.getByRole('button').filter({ has: page.getByText(listName, { exact: true }) }).click();
+	await completeWalletAsAuthorizationWithPidSignIn(page);
 }
 
 // The issuer's own landing pages (wallet-issuer's "wwWallet Issuer" catalog),

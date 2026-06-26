@@ -81,3 +81,8 @@ Add new spec files under `tests/`. Each test gets its own isolated browser conte
   issuer's offer page (in a separate tab) and feeds them into the wallet's camera APIs as a real,
   decodable QR code, so the actual scan-and-decode UI runs end to end. See
   `tests/issue-credential-by-qr-scan.spec.ts`.
+- `issueCredentialUsingPidSignIn(page, listName)` — same OpenID4VCI flow as `issueCredential`, but
+  logs into wallet-as with its "Sign in with PID" alternative (an OpenID4VP presentation of a PID
+  the account already holds) instead of the demo username/password. Requires a PID credential to
+  already be issued first, and only applies to scopes other than PID itself. See
+  `tests/issue-credential-sign-in-with-pid.spec.ts`.
