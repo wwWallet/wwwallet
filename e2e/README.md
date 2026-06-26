@@ -63,37 +63,48 @@ npx playwright show-trace test-results/<test-folder>/trace.zip
 ## Adding tests
 
 Add new spec files under `tests/`. Each test gets its own isolated browser context automatically.
-`tests/helpers.ts` has the shared building blocks:
-- `signUpNewWallet(page, context)` — registers a simulated passkey (Chrome DevTools Protocol
-  virtual authenticator, with `hasPrf: true`, required by this wallet's WebAuthn PRF-based signup
-  flow) and signs up a new wallet, landing on the home page.
-- `issueCredential(page, listName)` — drives the OpenID4VCI flow for one credential from the
-  `/add` list (`listName` is its exact display name there, e.g. `"PID mDoc"`) through wallet-as
-  login/consent (demo account `test`/`test`), back to the wallet's home page. See
-  `tests/issue-credentials.spec.ts` for the credential types currently covered (all from
-  "wwWallet Issuer" — the separate "Digital Credentials Issuer" entries, including the `(deferred)`
-  variants, aren't covered yet).
-- `issueCredentialFromIssuer(page, credentialName)` — same OpenID4VCI flow, but started from the
-  issuer's own site (`wallet-issuer`'s catalog at `:8003`, not the wallet's `/add` list):
-  `credentialName` is the heading text on its catalog card. See
-  `tests/issue-credentials-from-issuer.spec.ts`.
-- `issueCredentialByScanningQrCode(page, context, credentialName)` — same flow again, but via the
-  wallet's own QR scanner instead of clicking a link: it reads the exact QR contents off the
-  issuer's offer page (in a separate tab) and feeds them into the wallet's camera APIs as a real,
-  decodable QR code, so the actual scan-and-decode UI runs end to end. See
-  `tests/issue-credential-by-qr-scan.spec.ts`.
-- `issueCredentialUsingPidSignIn(page, listName)` — same OpenID4VCI flow as `issueCredential`, but
-  logs into wallet-as with its "Sign in with PID" alternative (an OpenID4VP presentation of a PID
-  the account already holds) instead of the demo username/password. Requires a PID credential to
-  already be issued first, and only applies to scopes other than PID itself. See
-  `tests/issue-credential-sign-in-with-pid.spec.ts`.
-- `presentCredentialsToVerifier(page, definitionTitle)` — drives an OpenID4VP presentation to
-  `wallet-verifier` (`:8005`), from picking a fixed-combo request definition on its site (e.g.
-  `"PID + EHIC"`) through the wallet's credential-selection popup, ending on the verifier's own
-  result page. The account needs to already hold whatever credential types that definition
-  requests.
-- `presentSelectableCredentialToVerifier(page, definitionTitle, fields)` — same, but for one of the
-  three definitions where the verifier first lets you pick which claims to request (`"PID"`,
-  `"Bachelor Diploma"`, `"EHIC"`); `fields` is `'all'` or `'one'`. See
-  `tests/present-credentials-to-verifier.spec.ts`, which covers all 9 of wallet-verifier's standard
-  definitions (the QES/QC transaction-data and custom-DCQL ones aren't covered).
+`tests/helpers/` has the shared building blocks, split by concern and re-exported from
+`tests/helpers/index.ts` (so `import { ... } from './helpers'` works the same regardless of which
+file actually defines something):
+
+- **`auth.ts`** — account lifecycle.
+  - `signUpNewWallet(page, context)` — registers a simulated passkey (Chrome DevTools Protocol
+    virtual authenticator, with `hasPrf: true`, required by this wallet's WebAuthn PRF-based
+    signup flow) and signs up a new wallet, landing on the home page.
+  - `deleteAccount(page)`, plus the lower-level `setUpPasskeyAuthenticator` /
+    `clearPasskeyCredentials` / `replacePasskeyAuthenticator` / `signUp` used by tests that sign up
+    or delete more than once (see `tests/account-lifecycle-stress.spec.ts`).
+- **`issuance.ts`** — OpenID4VCI issuance, from every entry point:
+  - `issueCredential(page, listName)` — the wallet's own `/add` list (`listName` is its exact
+    display name there, e.g. `"PID mDoc"`) through wallet-as login/consent (demo account
+    `test`/`test`). See `tests/issue-credentials.spec.ts` for the credential types currently
+    covered (all from "wwWallet Issuer" — the separate "Digital Credentials Issuer" entries,
+    including the `(deferred)` variants, aren't covered yet).
+  - `issueCredentialFromIssuer(page, credentialName)` — same flow, started from the issuer's own
+    site (`wallet-issuer`'s catalog at `:8003`) instead. See
+    `tests/issue-credentials-from-issuer.spec.ts`.
+  - `issueCredentialByScanningQrCode(page, context, credentialName)` — same again, via the
+    wallet's own QR scanner instead of clicking a link: it reads the exact QR contents off the
+    issuer's offer page (in a separate tab) and feeds them into the wallet's camera APIs as a
+    real, decodable QR code, so the actual scan-and-decode UI runs end to end (see `qr.ts`). See
+    `tests/issue-credential-by-qr-scan.spec.ts`.
+  - `issueCredentialUsingPidSignIn(page, listName)` — same as `issueCredential`, but logs into
+    wallet-as with its "Sign in with PID" alternative (an OpenID4VP presentation of a PID the
+    account already holds) instead of the demo username/password. Requires a PID credential to
+    already be issued first, and only applies to scopes other than PID itself. See
+    `tests/issue-credential-sign-in-with-pid.spec.ts`.
+- **`verifier.ts`** — OpenID4VP presentations to `wallet-verifier` (`:8005`):
+  - `presentCredentialsToVerifier(page, definitionTitle)` — picks a fixed-combo request
+    definition on its site (e.g. `"PID + EHIC"`) through the wallet's credential-selection popup,
+    ending on the verifier's own result page. The account needs to already hold whatever
+    credential types that definition requests.
+  - `presentSelectableCredentialToVerifier(page, definitionTitle, fields)` — same, but for one of
+    the three definitions where the verifier first lets you pick which claims to request
+    (`"PID"`, `"Bachelor Diploma"`, `"EHIC"`); `fields` is `'all'` or `'one'`. See
+    `tests/present-credentials-to-verifier.spec.ts`, which covers all 9 of wallet-verifier's
+    standard definitions (the QES/QC transaction-data and custom-DCQL ones aren't covered).
+- **`presentation.ts`** — `selectAndSendAllRequestedCredentials`, the shared walk through the
+  wallet's verifier credential-selection popup, used by both `issuance.ts` (PID sign-in) and
+  `verifier.ts`.
+- **`qr.ts`** — `mockCameraWithQrCode`, the camera-mocking internals behind
+  `issueCredentialByScanningQrCode`.
