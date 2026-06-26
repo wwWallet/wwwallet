@@ -108,3 +108,10 @@ file actually defines something):
   `verifier.ts`.
 - **`qr.ts`** — `mockCameraWithQrCode`, the camera-mocking internals behind
   `issueCredentialByScanningQrCode`.
+
+`tests/delete-credential.spec.ts` deletes one credential (not the whole account, unlike
+`delete-account.spec.ts`) and checks the rest of the account is untouched.
+
+Not covered: the "Digital Credentials Issuer" entries on `/add` (including its `(deferred)`
+variants) resolve to an external third-party service (`dev.issuer-backend.eudiw.dev`), not the
+local stack, so they're intentionally left untested here.
