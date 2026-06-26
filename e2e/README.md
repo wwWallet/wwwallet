@@ -72,3 +72,12 @@ Add new spec files under `tests/`. Each test gets its own isolated browser conte
   `tests/issue-credentials.spec.ts` for the credential types currently covered (all from
   "wwWallet Issuer" — the separate "Digital Credentials Issuer" entries, including the `(deferred)`
   variants, aren't covered yet).
+- `issueCredentialFromIssuer(page, credentialName)` — same OpenID4VCI flow, but started from the
+  issuer's own site (`wallet-issuer`'s catalog at `:8003`, not the wallet's `/add` list):
+  `credentialName` is the heading text on its catalog card. See
+  `tests/issue-credentials-from-issuer.spec.ts`.
+- `issueCredentialByScanningQrCode(page, context, credentialName)` — same flow again, but via the
+  wallet's own QR scanner instead of clicking a link: it reads the exact QR contents off the
+  issuer's offer page (in a separate tab) and feeds them into the wallet's camera APIs as a real,
+  decodable QR code, so the actual scan-and-decode UI runs end to end. See
+  `tests/issue-credential-by-qr-scan.spec.ts`.
