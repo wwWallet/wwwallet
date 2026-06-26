@@ -12,7 +12,7 @@
     "install": "WALLET_COMMON_SOURCE=default ./scripts/install-all.sh",
     "install:local": "WALLET_COMMON_SOURCE=local ./scripts/install-all.sh",
     "start": "./scripts/run-all.sh",
-    "start:preview": "FRONTEND_CMD=\"npm --prefix wallet-frontend run build && npm --prefix wallet-frontend run preview\" ./scripts/run-all.sh",
+    "start:preview": "FRONTEND_CMD=\"npm --prefix wallet-frontend run build -- --mode development && npm --prefix wallet-frontend run preview\" ./scripts/run-all.sh",
     "build:prod": "./scripts/build.sh",
     "init-db": "yarn migrate && node ./scripts/init-db.js",
     "down": "docker compose down",
