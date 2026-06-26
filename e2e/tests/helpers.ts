@@ -22,17 +22,41 @@ export async function addPasskeyAuthenticator(client: CDPSession) {
 	return authenticatorId;
 }
 
-// Signs up a brand-new wallet with a simulated passkey and lands on the home
-// page. Shared by every test that needs an authenticated session to start from.
-export async function signUpNewWallet(page: Page, context: BrowserContext): Promise<string> {
+// Registers a single virtual authenticator for the page's CDP session. Split
+// out from signUp() so tests that sign up more than once (e.g. a repeated
+// create/delete cycle) can call this once and reuse it, rather than stacking
+// up one virtual authenticator per signup.
+export async function setUpPasskeyAuthenticator(
+	page: Page,
+	context: BrowserContext,
+): Promise<{ client: CDPSession, authenticatorId: string }> {
 	const client = await context.newCDPSession(page);
-	await addPasskeyAuthenticator(client);
+	const authenticatorId = await addPasskeyAuthenticator(client);
+	return { client, authenticatorId };
+}
 
-	// Force English so text-based selectors don't depend on the test runner's locale.
-	await page.addInitScript(() => localStorage.setItem('locale', 'en'));
+// Deleting an account in the app only removes server-side data, the same as
+// in real life it doesn't revoke the passkey from the device, so a reused
+// authenticator accumulates one resident credential per signup. Real
+// authenticators (and this virtual one) cap how many they'll store, so
+// repeated create/delete cycles in one test need to clear it out between
+// signups — simulating the same device getting a fresh passkey each time,
+// as if the old one had been forgotten when its account was deleted.
+export async function clearPasskeyCredentials(client: CDPSession, authenticatorId: string): Promise<void> {
+	await client.send('WebAuthn.clearCredentials', { authenticatorId });
+}
 
-	const walletName = `Playwright Wallet ${Date.now()}`;
+// Same idea, but simulating a different device signing up each time instead
+// of the same device getting a new passkey: removes the old virtual
+// authenticator entirely and registers a brand-new one.
+export async function replacePasskeyAuthenticator(client: CDPSession, authenticatorId: string): Promise<string> {
+	await client.send('WebAuthn.removeVirtualAuthenticator', { authenticatorId });
+	return addPasskeyAuthenticator(client);
+}
 
+// Signs up a brand-new wallet with a simulated passkey (registered via
+// setUpPasskeyAuthenticator) and lands on the home page.
+export async function signUp(page: Page, walletName: string = `Playwright Wallet ${Date.now()}`): Promise<string> {
 	await page.goto('/login');
 	await page.locator('#signUp-switch-loginsignup').click();
 
@@ -47,6 +71,30 @@ export async function signUpNewWallet(page: Page, context: BrowserContext): Prom
 	await page.locator('#close-welcome-modal').click({ timeout: 5_000 }).catch(() => {});
 
 	return walletName;
+}
+
+// Convenience wrapper for tests that only sign up once: sets up the
+// authenticator and immediately signs up. Shared by every test that needs an
+// authenticated session to start from.
+export async function signUpNewWallet(page: Page, context: BrowserContext): Promise<string> {
+	await setUpPasskeyAuthenticator(page, context);
+	// Force English so text-based selectors don't depend on the test runner's locale.
+	await page.addInitScript(() => localStorage.setItem('locale', 'en'));
+	return signUp(page);
+}
+
+// Deletes the currently signed-in account from settings, ending back on /login.
+export async function deleteAccount(page: Page): Promise<void> {
+	await page.goto('/settings');
+
+	// Deleting is locked behind a re-authentication step (client-side
+	// safeguard only); this triggers another WebAuthn assertion against the
+	// same passkey used to sign in.
+	await page.locator('#unlock-passkey-management-settings').click();
+	await page.locator('#delete-account').click();
+	await page.locator('#confirm-delete-popup').click();
+
+	await page.waitForURL((url) => url.pathname.startsWith('/login'), { timeout: 20_000 });
 }
 
 // Drives the full OpenID4VCI authorization code flow for one credential type,
