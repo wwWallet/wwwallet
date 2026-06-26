@@ -11,8 +11,9 @@ expect it to already be serving the wallet. You're responsible for starting ever
 
 1. **Backend stack.** `tests/passkey-signup.spec.ts` only needs `wallet-backend-server` + the DB
    up. `tests/issue-credentials.spec.ts` drives a full OpenID4VCI issuance flow, so it also needs
-   `wallet-issuer` (`:8003`) and `wallet-as`, the authorization server (`:6060`). Easiest is the
-   whole stack from the repo root:
+   `wallet-issuer` (`:8003`) and `wallet-as`, the authorization server (`:6060`).
+   `tests/present-credentials-to-verifier.spec.ts` also needs `wallet-verifier` (`:8005`). Easiest
+   is the whole stack from the repo root:
    ```sh
    yarn start
    ```
@@ -86,3 +87,8 @@ Add new spec files under `tests/`. Each test gets its own isolated browser conte
   the account already holds) instead of the demo username/password. Requires a PID credential to
   already be issued first, and only applies to scopes other than PID itself. See
   `tests/issue-credential-sign-in-with-pid.spec.ts`.
+- `presentCredentialsToVerifier(page, definitionTitle)` — drives an OpenID4VP presentation to
+  `wallet-verifier` (`:8005`), from picking a request definition on its site (e.g. `"PID + EHIC"`)
+  through the wallet's credential-selection popup, ending on the verifier's own result page. The
+  account needs to already hold whatever credential types that definition requests. See
+  `tests/present-credentials-to-verifier.spec.ts`.

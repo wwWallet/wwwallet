@@ -120,6 +120,20 @@ async function completeWalletAsAuthorization(page: Page): Promise<void> {
 	await approveWalletAsConsent(page);
 }
 
+// Walks the wallet's verifier credential-selection popup from its preview
+// step through one selection step per requested credential type (picking
+// the first matching card each time) to the summary step, then sends the
+// presentation. Used for any OpenID4VP request, whether it came from
+// wallet-as's PID sign-in or an actual verifier.
+async function selectAndSendAllRequestedCredentials(page: Page): Promise<void> {
+	await page.locator('#next-select-credentials').click();
+	while (!(await page.locator('#send-select-credentials').isVisible())) {
+		await page.locator('[id^="slider-select-credentials-"]').first().click();
+		await page.locator('#next-select-credentials').click();
+	}
+	await page.locator('#send-select-credentials').click();
+}
+
 // Alternative to completeWalletAsAuthorization: logs in by presenting a PID
 // the account already holds (see issueCredential(page, 'PID')) instead of
 // the demo username/password. wallet-as only offers this for scopes other
@@ -131,10 +145,7 @@ async function completeWalletAsAuthorizationWithPidSignIn(page: Page): Promise<v
 	// Redirects to the wallet with an OpenID4VP request for the PID, handled
 	// by the same credential-selection popup any verifier request would use.
 	await page.waitForURL(/localhost:3000\/\?/, { timeout: 20_000 });
-	await page.locator('#next-select-credentials').click();
-	await page.locator('[id^="slider-select-credentials-"]').first().click();
-	await page.locator('#next-select-credentials').click();
-	await page.locator('#send-select-credentials').click();
+	await selectAndSendAllRequestedCredentials(page);
 
 	await page.waitForURL(/localhost:6060\/interaction\//, { timeout: 20_000 });
 	await approveWalletAsConsent(page);
@@ -273,4 +284,25 @@ export async function issueCredentialByScanningQrCode(page: Page, context: Brows
 	await page.locator('#bottom-nav-item-qr').click();
 
 	await completeWalletAsAuthorization(page);
+}
+
+// wallet-verifier's own site, separate from both the wallet-frontend app and
+// wallet-issuer.
+const VERIFIER_URL = 'http://localhost:8005';
+
+// Presents credentials to wallet-verifier: pick a definition card from its
+// catalog (e.g. "PID + EHIC"), click "Open with wwWallet" on its request
+// page, then select and send whatever credentials it asks for. Ends on the
+// verifier's own "Presentation Successful" result page. The account needs
+// to already hold whatever credential types the chosen definition requests.
+export async function presentCredentialsToVerifier(page: Page, definitionTitle: string): Promise<void> {
+	await page.goto(`${VERIFIER_URL}/verifier/public/definitions`);
+	await page.locator('a.def-card').filter({ has: page.getByText(definitionTitle, { exact: true }) }).click();
+	await page.waitForURL(/\/presentation-request\//, { timeout: 20_000 });
+
+	await page.getByRole('button', { name: 'Open with wwWallet', exact: true }).click();
+	await page.waitForURL(/localhost:3000\/cb\?/, { timeout: 20_000 });
+
+	await selectAndSendAllRequestedCredentials(page);
+	await page.waitForURL(/localhost:8005\/verifier\/callback/, { timeout: 20_000 });
 }
