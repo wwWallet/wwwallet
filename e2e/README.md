@@ -9,11 +9,14 @@ they exercise the system as a whole, not one service in isolation.
 These tests don't start anything themselves — they just point at `http://localhost:3000` and
 expect it to already be serving the wallet. You're responsible for starting everything first:
 
-1. **Backend stack** (wallet-backend-server, DB, etc.), e.g. from the repo root:
+1. **Backend stack.** `tests/passkey-signup.spec.ts` only needs `wallet-backend-server` + the DB
+   up. `tests/issue-credentials.spec.ts` drives a full OpenID4VCI issuance flow, so it also needs
+   `wallet-issuer` (`:8003`) and `wallet-as`, the authorization server (`:6060`). Easiest is the
+   whole stack from the repo root:
    ```sh
-   yarn dev
+   yarn start
    ```
-2. **Frontend**, on port 3000. Either is fine:
+2. **Frontend**, on port 3000. Either is fine (`yarn start` above already covers this too):
    - Dev server: `yarn dev` (or `yarn start`) from `wallet-frontend/`.
    - Production-ish build (closer to what real users get — minified bundle, service worker):
      ```sh
@@ -59,6 +62,13 @@ npx playwright show-trace test-results/<test-folder>/trace.zip
 ## Adding tests
 
 Add new spec files under `tests/`. Each test gets its own isolated browser context automatically.
-For flows that need a passkey, see `tests/passkey-signup.spec.ts` for how to register a Chrome
-DevTools Protocol virtual authenticator (with `hasPrf: true`, required by this wallet's WebAuthn
-PRF-based signup flow) instead of relying on real hardware/biometrics.
+`tests/helpers.ts` has the shared building blocks:
+- `signUpNewWallet(page, context)` — registers a simulated passkey (Chrome DevTools Protocol
+  virtual authenticator, with `hasPrf: true`, required by this wallet's WebAuthn PRF-based signup
+  flow) and signs up a new wallet, landing on the home page.
+- `issueCredential(page, listName)` — drives the OpenID4VCI flow for one credential from the
+  `/add` list (`listName` is its exact display name there, e.g. `"PID mDoc"`) through wallet-as
+  login/consent (demo account `test`/`test`), back to the wallet's home page. See
+  `tests/issue-credentials.spec.ts` for the credential types currently covered (all from
+  "wwWallet Issuer" — the separate "Digital Credentials Issuer" entries, including the `(deferred)`
+  variants, aren't covered yet).
