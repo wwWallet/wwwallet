@@ -98,27 +98,16 @@ export async function deleteAccount(page: Page): Promise<void> {
 	await page.waitForURL((url) => url.pathname.startsWith('/login'), { timeout: 20_000 });
 }
 
-// Clicks through the wallet's own redirect-consent popup onto wallet-as's
-// login page. Shared by every way of starting issuance (the /add list, an
-// issuer's own "Open in wwWallet" link, or scanning the issuer's QR code).
 async function clickContinueRedirectPopup(page: Page): Promise<void> {
 	await page.locator('#continue-redirect-popup').click();
-	// Full-page redirect to wallet-as (the authorization server) for login.
 	await page.waitForURL(/localhost:6060\/interaction\//, { timeout: 20_000 });
 }
 
-// Approves wallet-as's consent screen, ending back on the wallet's home
-// page. Shared by every wallet-as login method (username/password, PID
-// sign-in).
 async function approveWalletAsConsent(page: Page): Promise<void> {
 	await page.getByRole('button', { name: 'Authorize' }).click();
 	await page.waitForURL(/localhost:3000\//, { timeout: 20_000 });
 }
 
-// Drives the part of the OpenID4VCI authorization code flow shared by every
-// way of starting issuance: the wallet's own redirect-consent popup, then
-// wallet-as login (demo username/password) and consent, ending back on the
-// wallet's home page.
 async function completeWalletAsAuthorization(page: Page): Promise<void> {
 	await clickContinueRedirectPopup(page);
 
@@ -131,30 +120,22 @@ async function completeWalletAsAuthorization(page: Page): Promise<void> {
 	await approveWalletAsConsent(page);
 }
 
-// Same as completeWalletAsAuthorization, but logs into wallet-as with the
-// "Sign in with PID" alternative instead of typing the demo
-// username/password: an OpenID4VP presentation of a PID credential the
-// account already holds (see issueCredential(page, 'PID')), handled by the
-// wallet's ordinary verifier credential-selection popup. wallet-as only
-// offers this for scopes other than PID itself (see its
-// util/pidAuthEligibility.ts), so it isn't available when issuing PID.
+// Alternative to completeWalletAsAuthorization: logs in by presenting a PID
+// the account already holds (see issueCredential(page, 'PID')) instead of
+// the demo username/password. wallet-as only offers this for scopes other
+// than PID itself.
 async function completeWalletAsAuthorizationWithPidSignIn(page: Page): Promise<void> {
 	await clickContinueRedirectPopup(page);
-
 	await page.getByRole('button', { name: 'Sign in with PID' }).click();
 
-	// wallet-as redirects to the wallet with an OpenID4VP request for the PID;
-	// the wallet handles it with the same credential-selection popup any
-	// verifier request would trigger.
+	// Redirects to the wallet with an OpenID4VP request for the PID, handled
+	// by the same credential-selection popup any verifier request would use.
 	await page.waitForURL(/localhost:3000\/\?/, { timeout: 20_000 });
 	await page.locator('#next-select-credentials').click();
 	await page.locator('[id^="slider-select-credentials-"]').first().click();
 	await page.locator('#next-select-credentials').click();
 	await page.locator('#send-select-credentials').click();
 
-	// Sending the presentation redirects back to wallet-as's PID callback
-	// page, which auto-submits and lands on the same consent screen the
-	// username/password flow would.
 	await page.waitForURL(/localhost:6060\/interaction\//, { timeout: 20_000 });
 	await approveWalletAsConsent(page);
 }
@@ -172,28 +153,20 @@ export async function issueCredential(page: Page, listName: string): Promise<voi
 	await completeWalletAsAuthorization(page);
 }
 
-// Same as issueCredential, but signs into wallet-as with an existing PID
-// instead of the demo username/password (see
-// completeWalletAsAuthorizationWithPidSignIn). The account must already hold
-// a PID credential, and `listName` must be a type other than PID itself.
+// Same as issueCredential, but requires a PID credential already issued and
+// `listName` to be a type other than PID itself.
 export async function issueCredentialUsingPidSignIn(page: Page, listName: string): Promise<void> {
 	await page.goto('/add');
 	await page.getByRole('button').filter({ has: page.getByText(listName, { exact: true }) }).click();
 	await completeWalletAsAuthorizationWithPidSignIn(page);
 }
 
-// The issuer's own landing pages (wallet-issuer's "wwWallet Issuer" catalog),
-// separate from the wallet-frontend app the rest of these helpers drive.
 const ISSUER_URL = 'http://localhost:8003';
 
-// Drives issuance the way a real user would when starting from the issuer's
-// own site instead of the wallet's /add list: browse its catalog, click
-// "Issue" on one credential's card, then "Open in wwWallet" on its offer
-// page. That link does a full top-level navigation back to the wallet (a
-// different origin, in the same tab/device) carrying a `credential_offer_uri`
-// the wallet's UriHandlerProvider picks up on load, showing the same
-// redirect-consent popup as the /add flow. `credentialName` is the exact
-// heading text on the issuer's catalog card (e.g. "PID mDoc").
+// Starts issuance from the issuer's own catalog instead of the wallet's
+// /add list: click "Issue" on a credential card, then "Open in wwWallet" on
+// its offer page. `credentialName` is the exact heading text on that card
+// (e.g. "PID mDoc").
 export async function issueCredentialFromIssuer(page: Page, credentialName: string): Promise<void> {
 	await page.goto(ISSUER_URL);
 	await page.locator('.card')
@@ -207,14 +180,9 @@ export async function issueCredentialFromIssuer(page: Page, credentialName: stri
 	await completeWalletAsAuthorization(page);
 }
 
-// Renders `text` as a real QR code (the same encoder the issuer uses to draw
-// its own QR canvas) onto an offscreen canvas inside the page, then replaces
-// the camera APIs the wallet's QRCodeScanner relies on (enumerateDevices,
-// getUserMedia) so that opening the scanner "sees" that canvas instead of a
-// real camera. This drives the actual on-screen scan-and-decode flow (camera
-// permission check, device capability probing, the qr-scanner library
-// reading real video frames) without needing real camera hardware or
-// browser-level fake-camera launch flags.
+// Renders `text` as a real QR code onto an offscreen canvas, then replaces
+// the wallet's camera APIs (enumerateDevices, getUserMedia) so its scanner
+// "sees" that canvas instead of a real camera.
 async function mockCameraWithQrCode(page: Page, text: string): Promise<void> {
 	const qr = QRCode.create(text, { errorCorrectionLevel: 'M' });
 	const size = qr.modules.size;
@@ -246,61 +214,44 @@ async function mockCameraWithQrCode(page: Page, text: string): Promise<void> {
 			}
 		}
 
-		// Chromium only emits a "new" canvas-captured frame when the canvas
-		// pixels actually change, regardless of the requested frame rate, so a
-		// canvas drawn once and never touched again yields a stream stuck on
-		// its first frame; that in turn means requestVideoFrameCallback (which
-		// the scanner's frame loop prefers) never fires a second time and
-		// scanning stalls after a single attempt. Toggling one corner pixel on
-		// an interval keeps real frames flowing without visibly affecting the
-		// QR code.
+		// Chromium only emits a "new" captured frame when the canvas pixels
+		// change, so a static canvas stalls the scanner's frame loop after one
+		// attempt. Toggling one corner pixel keeps frames flowing.
 		setInterval(() => {
 			ctx.fillStyle = ctx.fillStyle === '#000000' ? '#fefefe' : '#000000';
 			ctx.fillRect(dim - 1, dim - 1, 1, 1);
 		}, 100);
 
-		// One capture, reused for every getUserMedia() call: the scanner probes
-		// the "camera" twice (once for permission, once per enumerated device)
-		// before the real one Webcam uses, stop()-ing the track each time. A
-		// fresh captureStream() per call would still report itself as "live",
-		// but reliably left the video element that ultimately uses it stuck at
-		// readyState 0 forever — something about a track from this same canvas
-		// having already been stopped once seems to poison later captures of
-		// it. Stubbing out stop() as a no-op and always handing back the same
-		// stream avoids that entirely.
+		// Reused for every getUserMedia() call rather than capturing fresh each
+		// time: the scanner probes the "camera" twice before Webcam's own call,
+		// stop()-ing the track each time, which otherwise left the stream stuck
+		// at readyState 0 for good. stop() is stubbed out to a no-op so that's
+		// harmless here.
 		const stream = canvas.captureStream(10);
 		const track = stream.getVideoTracks()[0];
-		// CanvasCaptureMediaStreamTrack doesn't normally implement
-		// getCapabilities(); the scanner needs it to pick a "back" camera and a
-		// resolution.
+		// CanvasCaptureMediaStreamTrack doesn't normally implement this; the
+		// scanner needs it to pick a "back" camera and a resolution.
 		track.getCapabilities = () => ({ width: { max: dim }, height: { max: dim }, facingMode: ['environment'] }) as MediaTrackCapabilities;
 		track.stop = () => { };
 
 		const fakeDevice = { deviceId: 'e2e-fake-camera', kind: 'videoinput' as const, label: 'e2e fake camera', groupId: 'e2e-fake-camera-group' };
-		// @ts-expect-error test-only override of the real camera APIs, see comment above mockCameraWithQrCode
+		// @ts-expect-error test-only override of the real camera APIs
 		navigator.mediaDevices.enumerateDevices = async () => [fakeDevice];
 		navigator.mediaDevices.getUserMedia = async () => stream;
 	}, {
 		matrix,
 		moduleSize: 8,
-		// wallet-frontend's qr-scanner only scans the center 2/3 of the video
-		// frame by default (see _calculateScanRegion in
-		// wallet-frontend/src/utils/qr/qr-scanner.ts), so the quiet zone needs
-		// to be wide enough that the QR pattern itself — not just its margin —
-		// stays within that crop, rather than the spec-minimum 4 modules.
+		// The scanner only analyzes the center 2/3 of the frame, so the quiet
+		// zone needs to be wider than the spec minimum to keep the QR pattern
+		// itself inside that crop.
 		quietZone: Math.ceil(size / 2),
 	});
 }
 
-// Drives issuance the way a real user would when scanning the issuer's QR
-// code with the wallet's own scanner — the cross-device path (e.g. phone
-// wallet, laptop issuer screen). The issuer's offer page is opened in a
-// separate tab so the already signed-in wallet tab never navigates away;
-// the QR's exact contents are read directly from the canvas the issuer
-// renders it from (the value it passes to its own QR-rendering library),
-// then re-rendered as a real QR code fed into the wallet's camera APIs.
-// `credentialName` is the exact heading text on the issuer's catalog card
-// (e.g. "PID mDoc").
+// Same starting point as issueCredentialFromIssuer, but scans the offer
+// page's QR code with the wallet's own scanner instead of clicking its link
+// (the issuer page is opened in a separate tab so the wallet tab never
+// navigates away).
 export async function issueCredentialByScanningQrCode(page: Page, context: BrowserContext, credentialName: string): Promise<void> {
 	const issuerPage = await context.newPage();
 	await issuerPage.goto(ISSUER_URL);
