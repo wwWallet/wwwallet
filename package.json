@@ -14,7 +14,7 @@
     "start": "./scripts/run-all.sh",
     "start:preview": "FRONTEND_CMD=\"npm --prefix wallet-frontend run build -- --mode development && npm --prefix wallet-frontend run preview\" ./scripts/run-all.sh",
     "build:prod": "./scripts/build.sh",
-    "init-db": "yarn migrate && node ./scripts/init-db.js",
+    "init-db": "yarn migrate && node ./scripts/init-db.js && yarn migrate-verifier && yarn migrate-vct-registry",
     "down": "docker compose down",
     "migrate": "(cd wallet-backend-server/ && yarn typeorm migration:run)",
     "migrate-verifier": "(cd wallet-verifier/ && yarn migration:run)",
