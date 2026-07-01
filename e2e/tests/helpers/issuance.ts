@@ -12,15 +12,17 @@ async function approveWalletAsConsent(page: Page): Promise<void> {
 	await page.waitForURL(/localhost:3000\//, { timeout: 20_000 });
 }
 
-async function completeWalletAsAuthorization(page: Page): Promise<void> {
-	await clickContinueRedirectPopup(page);
-
+async function fillWalletAsLogin(page: Page): Promise<void> {
 	await page.locator('#login').fill('test');
 	await page.locator('#password').fill('test');
 	// Some scopes (e.g. diploma, ehic, por) also offer a "Sign in with PID"
 	// secondary button sharing the same class, so match on exact text instead.
 	await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+}
 
+async function completeWalletAsAuthorization(page: Page): Promise<void> {
+	await clickContinueRedirectPopup(page);
+	await fillWalletAsLogin(page);
 	await approveWalletAsConsent(page);
 }
 
@@ -110,4 +112,53 @@ export async function issueCredentialByScanningQrCode(page: Page, context: Brows
 	await page.locator('#bottom-nav-item-qr').click();
 
 	await completeWalletAsAuthorization(page);
+}
+
+// Starts issuance from the issuer's own catalog using the pre-authorized code
+// grant. Unlike the authorization code flow, the issuer drives the wallet-as
+// login itself (to bind the credential to an account) and then hands the
+// wallet a ready-to-redeem offer guarded by a transaction PIN: the browser
+// goes issuer catalog -> wallet-as login/consent -> back to the issuer's offer
+// page (showing the PIN) -> wallet, which prompts for that PIN and issues the
+// credential immediately (no second wallet-as login).
+export async function issueCredentialFromIssuerUsingPreAuthorizedCode(page: Page, credentialName: string): Promise<void> {
+	await page.goto(ISSUER_URL);
+	await page.locator('label.flow-toggle__option').filter({ hasText: 'Pre-Authorized Code' }).click();
+	await page.locator('.card')
+		.filter({ has: page.getByRole('heading', { name: credentialName, exact: true }) })
+		.click();
+
+	// The pre-authorized offer authenticates the account via wallet-as first,
+	// then redirects back to the issuer's offer page (not the wallet).
+	await page.waitForURL(/localhost:6060\/interaction\//, { timeout: 20_000 });
+	await fillWalletAsLogin(page);
+	await page.getByRole('button', { name: 'Authorize' }).click();
+	await page.waitForURL(/localhost:8003\/callback/, { timeout: 20_000 });
+
+	// The offer page shows the transaction PIN as "Your PIN is <code>"; the
+	// wallet asks for it when the offer is opened.
+	const pinText = await page.locator('.tx-code').textContent();
+	const txCode = pinText?.match(/\d+/)?.[0];
+	if (!txCode) {
+		throw new Error('Could not read the transaction PIN from the issuer offer page');
+	}
+
+	// "Open in wwWallet" points at the wallet with the credential offer (its
+	// /cb route renders Home and handles the offer). It opens in a new tab when
+	// a PIN is present, so navigate the wallet page to its href directly.
+	const walletOfferUrl = await page.getByRole('link', { name: 'Open in wwWallet', exact: true }).getAttribute('href');
+	if (!walletOfferUrl) {
+		throw new Error('Could not read the wwWallet offer link from the issuer offer page');
+	}
+	await page.goto(walletOfferUrl);
+
+	await page.locator('#continue-redirect-popup').click();
+
+	// The PIN popup renders one single-character input per digit.
+	const digits = txCode.split('');
+	const pinInputs = page.locator('input[autocomplete="one-time-code"]');
+	for (let i = 0; i < digits.length; i++) {
+		await pinInputs.nth(i).fill(digits[i]);
+	}
+	await page.locator('#submit-pin-input').click();
 }
