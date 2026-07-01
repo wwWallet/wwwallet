@@ -87,10 +87,11 @@ export async function signUpNewWallet(page: Page, context: BrowserContext): Prom
 export async function deleteAccount(page: Page): Promise<void> {
 	await page.goto('/settings');
 
-	// Deleting is locked behind a re-authentication step (client-side
-	// safeguard only); this triggers another WebAuthn assertion against the
-	// same passkey used to sign in.
-	await page.locator('#unlock-passkey-management-settings').click();
+	// Account deletion lives under the "Account" tab now, so switch to it first.
+	await page.locator('#settings-tab-account').click();
+
+	// Clicking delete is gated behind a re-authentication step: it triggers another WebAuthn assertion against the same
+	// passkey used to sign in, then opens the confirmation popup.
 	await page.locator('#delete-account').click();
 	await page.locator('#confirm-delete-popup').click();
 
