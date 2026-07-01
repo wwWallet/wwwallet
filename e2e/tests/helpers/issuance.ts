@@ -64,35 +64,39 @@ export async function issueCredentialUsingPidSignIn(page: Page, listName: string
 
 const ISSUER_URL = 'http://localhost:8003';
 
-// Starts issuance from the issuer's own catalog instead of the wallet's
-// /add list: click "Issue" on a credential card, then "Open in wwWallet" on
-// its offer page. `credentialName` is the exact heading text on that card
-// (e.g. "PID mDoc").
-export async function issueCredentialFromIssuer(page: Page, credentialName: string): Promise<void> {
+// Opens a credential offer from the issuer's own catalog. The catalog offers a
+// grant-type toggle that defaults to the pre-authorized code flow; these
+// helpers drive the authorization code flow, so select it first. Each catalog
+// entry is a single clickable card (an <a>) whose href the toggle rewires to
+// the standard `/offer/:id` route; `credentialName` is the exact heading text
+// on that card (e.g. "PID mDoc").
+async function openIssuerAuthorizationCodeOffer(page: Page, credentialName: string): Promise<void> {
 	await page.goto(ISSUER_URL);
+	await page.locator('label.flow-toggle__option').filter({ hasText: 'Authorization Code' }).click();
 	await page.locator('.card')
 		.filter({ has: page.getByRole('heading', { name: credentialName, exact: true }) })
-		.getByRole('link', { name: 'Issue', exact: true })
 		.click();
 	await page.waitForURL(/\/offer\//, { timeout: 20_000 });
+}
+
+// Starts issuance from the issuer's own catalog instead of the wallet's
+// /add list, using the authorization code grant: open the credential's offer
+// page, then click "Open in wwWallet".
+export async function issueCredentialFromIssuerUsingAuthorizationCode(page: Page, credentialName: string): Promise<void> {
+	await openIssuerAuthorizationCodeOffer(page, credentialName);
 
 	await page.getByRole('link', { name: 'Open in wwWallet', exact: true }).click();
 
 	await completeWalletAsAuthorization(page);
 }
 
-// Same starting point as issueCredentialFromIssuer, but scans the offer
+// Same starting point as issueCredentialFromIssuerUsingAuthorizationCode, but scans the offer
 // page's QR code with the wallet's own scanner instead of clicking its link
 // (the issuer page is opened in a separate tab so the wallet tab never
 // navigates away).
 export async function issueCredentialByScanningQrCode(page: Page, context: BrowserContext, credentialName: string): Promise<void> {
 	const issuerPage = await context.newPage();
-	await issuerPage.goto(ISSUER_URL);
-	await issuerPage.locator('.card')
-		.filter({ has: issuerPage.getByRole('heading', { name: credentialName, exact: true }) })
-		.getByRole('link', { name: 'Issue', exact: true })
-		.click();
-	await issuerPage.waitForURL(/\/offer\//, { timeout: 20_000 });
+	await openIssuerAuthorizationCodeOffer(issuerPage, credentialName);
 	const qrText = await issuerPage.locator('#qr').getAttribute('data-value');
 	await issuerPage.close();
 	if (!qrText) {
