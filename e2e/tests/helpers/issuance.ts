@@ -114,14 +114,13 @@ export async function issueCredentialByScanningQrCode(page: Page, context: Brows
 	await completeWalletAsAuthorization(page);
 }
 
-// Starts issuance from the issuer's own catalog using the pre-authorized code
-// grant. Unlike the authorization code flow, the issuer drives the wallet-as
-// login itself (to bind the credential to an account) and then hands the
-// wallet a ready-to-redeem offer guarded by a transaction PIN: the browser
-// goes issuer catalog -> wallet-as login/consent -> back to the issuer's offer
-// page (showing the PIN) -> wallet, which prompts for that PIN and issues the
-// credential immediately (no second wallet-as login).
-export async function issueCredentialFromIssuerUsingPreAuthorizedCode(page: Page, credentialName: string): Promise<void> {
+// Reaches the issuer's pre-authorized offer page for a credential and returns
+// the transaction PIN it displays. Unlike the authorization code flow, the
+// issuer drives the wallet-as login itself (to bind the credential to an
+// account) before rendering the offer, so this fills that login/consent on the
+// given page and leaves it on the offer page (which shows the PIN and a QR
+// code / wwWallet link).
+async function openIssuerPreAuthorizedOffer(page: Page, credentialName: string): Promise<string> {
 	await page.goto(ISSUER_URL);
 	await page.locator('label.flow-toggle__option').filter({ hasText: 'Pre-Authorized Code' }).click();
 	await page.locator('.card')
@@ -142,6 +141,29 @@ export async function issueCredentialFromIssuerUsingPreAuthorizedCode(page: Page
 	if (!txCode) {
 		throw new Error('Could not read the transaction PIN from the issuer offer page');
 	}
+	return txCode;
+}
+
+// Redeems a pre-authorized offer already open in the wallet: confirms the
+// redirect consent, then enters the transaction PIN and submits it. The PIN
+// popup renders one single-character input per digit.
+async function enterTransactionPin(page: Page, txCode: string): Promise<void> {
+	await page.locator('#continue-redirect-popup').click();
+
+	const digits = txCode.split('');
+	const pinInputs = page.locator('input[autocomplete="one-time-code"]');
+	for (let i = 0; i < digits.length; i++) {
+		await pinInputs.nth(i).fill(digits[i]);
+	}
+	await page.locator('#submit-pin-input').click();
+}
+
+// Starts issuance from the issuer's own catalog using the pre-authorized code
+// grant: issuer catalog -> wallet-as login/consent -> back to the issuer's
+// offer page (showing the PIN) -> wallet, which prompts for that PIN and issues
+// the credential immediately (no second wallet-as login).
+export async function issueCredentialFromIssuerUsingPreAuthorizedCode(page: Page, credentialName: string): Promise<void> {
+	const txCode = await openIssuerPreAuthorizedOffer(page, credentialName);
 
 	// "Open in wwWallet" points at the wallet with the credential offer (its
 	// /cb route renders Home and handles the offer). It opens in a new tab when
@@ -152,13 +174,27 @@ export async function issueCredentialFromIssuerUsingPreAuthorizedCode(page: Page
 	}
 	await page.goto(walletOfferUrl);
 
-	await page.locator('#continue-redirect-popup').click();
+	await enterTransactionPin(page, txCode);
+}
 
-	// The PIN popup renders one single-character input per digit.
-	const digits = txCode.split('');
-	const pinInputs = page.locator('input[autocomplete="one-time-code"]');
-	for (let i = 0; i < digits.length; i++) {
-		await pinInputs.nth(i).fill(digits[i]);
+// Same pre-authorized code flow as issueCredentialFromIssuerUsingPreAuthorizedCode,
+// but scans the offer page's QR code with the wallet's own scanner instead of
+// following its link (the issuer page is opened in a separate tab so the wallet
+// tab never navigates away).
+export async function issueCredentialByScanningQrCodeUsingPreAuthorizedCode(page: Page, context: BrowserContext, credentialName: string): Promise<void> {
+	const issuerPage = await context.newPage();
+	const txCode = await openIssuerPreAuthorizedOffer(issuerPage, credentialName);
+	const qrText = await issuerPage.locator('#qr').getAttribute('data-value');
+	await issuerPage.close();
+	if (!qrText) {
+		throw new Error('Could not read the QR code value from the issuer offer page');
 	}
-	await page.locator('#submit-pin-input').click();
+
+	// The QR scanner is only reachable from the mobile bottom nav (see
+	// wallet-frontend's useScreenType hook: < 480px counts as "mobile").
+	await page.setViewportSize({ width: 390, height: 844 });
+	await mockCameraWithQrCode(page, qrText);
+	await page.locator('#bottom-nav-item-qr').click();
+
+	await enterTransactionPin(page, txCode);
 }
