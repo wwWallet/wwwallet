@@ -73,6 +73,19 @@ export async function signUp(page: Page, walletName: string = `Playwright Wallet
 	return walletName;
 }
 
+// qa intermittently raises a "Synchronize Wallet" popup when it notices the
+// account's private data changed server-side (e.g. once a deferred credential
+// resolves), which overlays the page and blocks the test. Auto-complete its
+// passkey re-sync whenever it appears; it never shows on the local stack.
+async function autoDismissSyncPopup(page: Page): Promise<void> {
+	await page.addLocatorHandler(
+		page.locator('#continue-login-state'),
+		async (popup) => {
+			await popup.click();
+		},
+	);
+}
+
 // Convenience wrapper for tests that only sign up once: sets up the
 // authenticator and immediately signs up. Shared by every test that needs an
 // authenticated session to start from.
@@ -80,6 +93,7 @@ export async function signUpNewWallet(page: Page, context: BrowserContext): Prom
 	await setUpPasskeyAuthenticator(page, context);
 	// Force English so text-based selectors don't depend on the test runner's locale.
 	await page.addInitScript(() => localStorage.setItem('locale', 'en'));
+	await autoDismissSyncPopup(page);
 	return signUp(page);
 }
 

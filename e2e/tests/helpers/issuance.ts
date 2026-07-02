@@ -8,8 +8,20 @@ async function clickContinueRedirectPopup(page: Page): Promise<void> {
 	await page.waitForURL(onService(WALLET_AS_URL, /^\/interaction\//), { timeout: 20_000 });
 }
 
+// Clicks the wallet-as "Authorize" consent, but only when it's shown: qa
+// remembers consent for its shared demo account and skips straight past it.
+async function authorizeWalletAsConsentIfShown(page: Page): Promise<void> {
+	const authorize = page.getByRole('button', { name: 'Authorize' });
+	try {
+		await authorize.waitFor({ state: 'visible', timeout: 5_000 });
+	} catch {
+		return;
+	}
+	await authorize.click();
+}
+
 async function approveWalletAsConsent(page: Page): Promise<void> {
-	await page.getByRole('button', { name: 'Authorize' }).click();
+	await authorizeWalletAsConsentIfShown(page);
 	await page.waitForURL(onService(WALLET_URL), { timeout: 20_000 });
 }
 
@@ -136,17 +148,16 @@ async function openIssuerPreAuthorizedOffer(page: Page, credentialName: string):
 		.filter({ has: page.getByRole('heading', { name: credentialName, exact: true }) })
 		.click();
 
-	// The pre-authorized offer authenticates the account via wallet-as first,
-	// then redirects back to the issuer's offer page (not the wallet).
+	// The issuer authenticates the account via wallet-as, then redirects back to
+	// its own offer page (not the wallet). This flow has no consent screen —
+	// login redirects straight to the issuer callback.
 	await page.waitForURL(onService(WALLET_AS_URL, /^\/interaction\//), { timeout: 20_000 });
 	await fillWalletAsLogin(page);
-	await page.getByRole('button', { name: 'Authorize' }).click();
 	await page.waitForURL(onService(ISSUER_URL, /^\/callback/), { timeout: 20_000 });
 
-	// The offer page shows a transaction PIN as "Your PIN is <code>" only when
-	// the issuer is configured with a tx code length > 0 (as the local dev stack
-	// is). Other deployments (e.g. qa) issue without a PIN, so treat it as
-	// optional and let the wallet redeem the offer directly.
+	// The offer page shows a transaction PIN only when the issuer is configured
+	// with a tx code length > 0 (local dev); qa issues without one, so it's
+	// optional.
 	const txCodeElement = page.locator('.tx-code');
 	if (await txCodeElement.count() === 0) {
 		return undefined;
@@ -160,11 +171,17 @@ async function openIssuerPreAuthorizedOffer(page: Page, credentialName: string):
 }
 
 // Redeems a pre-authorized offer already open in the wallet: confirms the
-// redirect consent, then — if the offer carried a transaction PIN — enters it
-// and submits. The PIN popup renders one single-character input per digit; when
-// no PIN is required the wallet issues straight after the redirect consent.
+// redirect-consent popup (skipped when qa redeems directly), then — if the
+// offer carried a transaction PIN — enters it, one single-character input per
+// digit, and submits.
 async function redeemPreAuthorizedOffer(page: Page, txCode?: string): Promise<void> {
-	await page.locator('#continue-redirect-popup').click();
+	const continueButton = page.locator('#continue-redirect-popup');
+	try {
+		await continueButton.waitFor({ state: 'visible', timeout: 5_000 });
+		await continueButton.click();
+	} catch {
+		// No redirect-consent popup; the wallet redeems directly.
+	}
 	if (!txCode) {
 		return;
 	}

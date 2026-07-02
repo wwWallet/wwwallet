@@ -7,7 +7,9 @@ import { WALLET_URL, VERIFIER_URL, onService } from './config';
 // own "Presentation Successful" result page.
 async function openInWwalletAndSendPresentation(page: Page): Promise<void> {
 	await page.getByRole('button', { name: 'Open with wwWallet', exact: true }).click();
-	await page.waitForURL(onService(WALLET_URL, /^\/cb\?/), { timeout: 20_000 });
+	// The verifier hands the OpenID4VP request to the wallet either at /cb (local
+	// stack) or at the app root (e.g. qa), both carrying the request in the query.
+	await page.waitForURL(onService(WALLET_URL, /^\/(cb)?\?/), { timeout: 20_000 });
 
 	await selectAndSendAllRequestedCredentials(page);
 	await page.waitForURL(onService(VERIFIER_URL, /^\/verifier\/callback/), { timeout: 20_000 });
