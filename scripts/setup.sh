@@ -64,6 +64,7 @@ touch ./wallet-as/certs/.keep
 cp scripts/keystore/wallet_as_example_wwwallet_org.pem ./wallet-as/keys/pem.crt
 cp scripts/keystore/wallet_as_example_wwwallet_org.key.pkcs8 ./wallet-as/keys/pem.key
 cp scripts/keystore/wwwallet_org_iaca.pem ./wallet-as/certs/wwwallet_org_iaca.pem
+./scripts/gen-oidc-jwks.sh ./wallet-as/keys/oidc.jwks.json --force
 
 # Copy wallet backend server certificates and keys
 mkdir -p ./wallet-backend-server/keys/
