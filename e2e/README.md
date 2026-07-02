@@ -9,7 +9,7 @@ they exercise the system as a whole, not one service in isolation.
 These tests don't start anything themselves — they just point at `http://localhost:3000` and
 expect it to already be serving the wallet. You're responsible for starting everything first:
 
-1. **Backend stack.** `tests/passkey-signup.spec.ts` only needs `wallet-backend-server` + the DB
+1. **Backend stack.** `tests/delete-account.spec.ts` only needs `wallet-backend-server` + the DB
    up. `tests/issue-credentials.spec.ts` drives a full OpenID4VCI issuance flow, so it also needs
    `wallet-issuer` (`:8003`) and `wallet-as`, the authorization server (`:6060`).
    `tests/present-credentials-to-verifier.spec.ts` also needs `wallet-verifier` (`:8005`). Easiest
