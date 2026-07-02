@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { WALLET_URL } from './tests/helpers/config';
 
 export default defineConfig({
 	testDir: './tests',
@@ -10,8 +11,10 @@ export default defineConfig({
 	reporter: 'list',
 	use: {
 		// The full stack (frontend + wallet-backend-server + DB) is expected to
-		// already be running before these tests start; see README.md.
-		baseURL: 'http://localhost:3000',
+		// already be running before these tests start; see README.md. Override
+		// WALLET_URL (and the other service URLs in tests/helpers/config.ts) to
+		// point the suite at another deployment.
+		baseURL: WALLET_URL,
 		trace: 'retain-on-failure',
 	},
 	projects: [

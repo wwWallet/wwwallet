@@ -1,20 +1,30 @@
 import type { Page, BrowserContext } from '@playwright/test';
 import { selectAndSendAllRequestedCredentials } from './presentation';
 import { mockCameraWithQrCode } from './qr';
+import { ISSUER_URL, WALLET_URL, WALLET_AS_URL, WALLET_AS_USERNAME, WALLET_AS_PASSWORD, onService } from './config';
 
 async function clickContinueRedirectPopup(page: Page): Promise<void> {
 	await page.locator('#continue-redirect-popup').click();
-	await page.waitForURL(/localhost:6060\/interaction\//, { timeout: 20_000 });
+	await page.waitForURL(onService(WALLET_AS_URL, /^\/interaction\//), { timeout: 20_000 });
 }
 
 async function approveWalletAsConsent(page: Page): Promise<void> {
 	await page.getByRole('button', { name: 'Authorize' }).click();
-	await page.waitForURL(/localhost:3000\//, { timeout: 20_000 });
+	await page.waitForURL(onService(WALLET_URL), { timeout: 20_000 });
 }
 
 async function fillWalletAsLogin(page: Page): Promise<void> {
-	await page.locator('#login').fill('test');
-	await page.locator('#password').fill('test');
+	// Some deployments (e.g. qa) pre-fill the login form with their own demo
+	// credentials, so only type ours when a field comes up empty — otherwise
+	// we'd overwrite the correct autofilled values with the local dev defaults.
+	const login = page.locator('#login');
+	const password = page.locator('#password');
+	if (!(await login.inputValue())) {
+		await login.fill(WALLET_AS_USERNAME);
+	}
+	if (!(await password.inputValue())) {
+		await password.fill(WALLET_AS_PASSWORD);
+	}
 	// Some scopes (e.g. diploma, ehic, por) also offer a "Sign in with PID"
 	// secondary button sharing the same class, so match on exact text instead.
 	await page.getByRole('button', { name: 'Sign in', exact: true }).click();
@@ -36,10 +46,10 @@ async function completeWalletAsAuthorizationWithPidSignIn(page: Page): Promise<v
 
 	// Redirects to the wallet with an OpenID4VP request for the PID, handled
 	// by the same credential-selection popup any verifier request would use.
-	await page.waitForURL(/localhost:3000\/\?/, { timeout: 20_000 });
+	await page.waitForURL(onService(WALLET_URL, /^\/\?/), { timeout: 20_000 });
 	await selectAndSendAllRequestedCredentials(page);
 
-	await page.waitForURL(/localhost:6060\/interaction\//, { timeout: 20_000 });
+	await page.waitForURL(onService(WALLET_AS_URL, /^\/interaction\//), { timeout: 20_000 });
 	await approveWalletAsConsent(page);
 }
 
@@ -63,8 +73,6 @@ export async function issueCredentialUsingPidSignIn(page: Page, listName: string
 	await page.getByRole('button').filter({ has: page.getByText(listName, { exact: true }) }).click();
 	await completeWalletAsAuthorizationWithPidSignIn(page);
 }
-
-const ISSUER_URL = 'http://localhost:8003';
 
 // Opens a credential offer from the issuer's own catalog. The catalog offers a
 // grant-type toggle that defaults to the pre-authorized code flow; these
@@ -115,12 +123,13 @@ export async function issueCredentialByScanningQrCode(page: Page, context: Brows
 }
 
 // Reaches the issuer's pre-authorized offer page for a credential and returns
-// the transaction PIN it displays. Unlike the authorization code flow, the
-// issuer drives the wallet-as login itself (to bind the credential to an
-// account) before rendering the offer, so this fills that login/consent on the
-// given page and leaves it on the offer page (which shows the PIN and a QR
-// code / wwWallet link).
-async function openIssuerPreAuthorizedOffer(page: Page, credentialName: string): Promise<string> {
+// the transaction PIN it displays, or undefined when the issuer isn't
+// configured to require one. Unlike the authorization code flow, the issuer
+// drives the wallet-as login itself (to bind the credential to an account)
+// before rendering the offer, so this fills that login/consent on the given
+// page and leaves it on the offer page (which shows the QR code / wwWallet link
+// and, when configured, the PIN).
+async function openIssuerPreAuthorizedOffer(page: Page, credentialName: string): Promise<string | undefined> {
 	await page.goto(ISSUER_URL);
 	await page.locator('label.flow-toggle__option').filter({ hasText: 'Pre-Authorized Code' }).click();
 	await page.locator('.card')
@@ -129,14 +138,20 @@ async function openIssuerPreAuthorizedOffer(page: Page, credentialName: string):
 
 	// The pre-authorized offer authenticates the account via wallet-as first,
 	// then redirects back to the issuer's offer page (not the wallet).
-	await page.waitForURL(/localhost:6060\/interaction\//, { timeout: 20_000 });
+	await page.waitForURL(onService(WALLET_AS_URL, /^\/interaction\//), { timeout: 20_000 });
 	await fillWalletAsLogin(page);
 	await page.getByRole('button', { name: 'Authorize' }).click();
-	await page.waitForURL(/localhost:8003\/callback/, { timeout: 20_000 });
+	await page.waitForURL(onService(ISSUER_URL, /^\/callback/), { timeout: 20_000 });
 
-	// The offer page shows the transaction PIN as "Your PIN is <code>"; the
-	// wallet asks for it when the offer is opened.
-	const pinText = await page.locator('.tx-code').textContent();
+	// The offer page shows a transaction PIN as "Your PIN is <code>" only when
+	// the issuer is configured with a tx code length > 0 (as the local dev stack
+	// is). Other deployments (e.g. qa) issue without a PIN, so treat it as
+	// optional and let the wallet redeem the offer directly.
+	const txCodeElement = page.locator('.tx-code');
+	if (await txCodeElement.count() === 0) {
+		return undefined;
+	}
+	const pinText = await txCodeElement.textContent();
 	const txCode = pinText?.match(/\d+/)?.[0];
 	if (!txCode) {
 		throw new Error('Could not read the transaction PIN from the issuer offer page');
@@ -145,10 +160,14 @@ async function openIssuerPreAuthorizedOffer(page: Page, credentialName: string):
 }
 
 // Redeems a pre-authorized offer already open in the wallet: confirms the
-// redirect consent, then enters the transaction PIN and submits it. The PIN
-// popup renders one single-character input per digit.
-async function enterTransactionPin(page: Page, txCode: string): Promise<void> {
+// redirect consent, then — if the offer carried a transaction PIN — enters it
+// and submits. The PIN popup renders one single-character input per digit; when
+// no PIN is required the wallet issues straight after the redirect consent.
+async function redeemPreAuthorizedOffer(page: Page, txCode?: string): Promise<void> {
 	await page.locator('#continue-redirect-popup').click();
+	if (!txCode) {
+		return;
+	}
 
 	const digits = txCode.split('');
 	const pinInputs = page.locator('input[autocomplete="one-time-code"]');
@@ -174,7 +193,7 @@ export async function issueCredentialFromIssuerUsingPreAuthorizedCode(page: Page
 	}
 	await page.goto(walletOfferUrl);
 
-	await enterTransactionPin(page, txCode);
+	await redeemPreAuthorizedOffer(page, txCode);
 }
 
 // Same pre-authorized code flow as issueCredentialFromIssuerUsingPreAuthorizedCode,
@@ -196,5 +215,5 @@ export async function issueCredentialByScanningQrCodeUsingPreAuthorizedCode(page
 	await mockCameraWithQrCode(page, qrText);
 	await page.locator('#bottom-nav-item-qr').click();
 
-	await enterTransactionPin(page, txCode);
+	await redeemPreAuthorizedOffer(page, txCode);
 }

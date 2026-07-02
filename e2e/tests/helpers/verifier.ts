@@ -1,19 +1,16 @@
 import type { Page } from '@playwright/test';
 import { selectAndSendAllRequestedCredentials } from './presentation';
-
-// wallet-verifier's own site, separate from both the wallet-frontend app and
-// wallet-issuer.
-const VERIFIER_URL = 'http://localhost:8005';
+import { WALLET_URL, VERIFIER_URL, onService } from './config';
 
 // Shared tail of every wallet-verifier presentation, once its request page
 // (with the "Open with wwWallet" button) is showing: ends on the verifier's
 // own "Presentation Successful" result page.
 async function openInWwalletAndSendPresentation(page: Page): Promise<void> {
 	await page.getByRole('button', { name: 'Open with wwWallet', exact: true }).click();
-	await page.waitForURL(/localhost:3000\/cb\?/, { timeout: 20_000 });
+	await page.waitForURL(onService(WALLET_URL, /^\/cb\?/), { timeout: 20_000 });
 
 	await selectAndSendAllRequestedCredentials(page);
-	await page.waitForURL(/localhost:8005\/verifier\/callback/, { timeout: 20_000 });
+	await page.waitForURL(onService(VERIFIER_URL, /^\/verifier\/callback/), { timeout: 20_000 });
 }
 
 // Presents credentials to wallet-verifier: pick a definition card from its
