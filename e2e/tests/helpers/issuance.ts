@@ -101,13 +101,17 @@ async function openIssuerAuthorizationCodeOffer(page: Page, credentialName: stri
 	await page.waitForURL(/\/offer\//, { timeout: 20_000 });
 }
 
+function walletOfferLink(page: Page) {
+	return page.getByRole('link', { name: /^(?:Open in )?wwWallet$/ });
+}
+
 // Starts issuance from the issuer's own catalog instead of the wallet's
 // /add list, using the authorization code grant: open the credential's offer
-// page, then click "Open in wwWallet".
+// page, then click the wwWallet link.
 export async function issueCredentialFromIssuerUsingAuthorizationCode(page: Page, credentialName: string): Promise<void> {
 	await openIssuerAuthorizationCodeOffer(page, credentialName);
 
-	await page.getByRole('link', { name: 'Open in wwWallet', exact: true }).click();
+	await walletOfferLink(page).click();
 
 	await completeWalletAsAuthorization(page);
 }
@@ -158,7 +162,7 @@ async function openIssuerPreAuthorizedOffer(page: Page, credentialName: string):
 	// The offer page shows a transaction PIN only when the issuer is configured
 	// with a tx code length > 0 (local dev); qa issues without one, so it's
 	// optional.
-	const txCodeElement = page.locator('.tx-code');
+	const txCodeElement = page.locator('.offer-pin-callout__code, .tx-code').first();
 	if (await txCodeElement.count() === 0) {
 		return undefined;
 	}
@@ -201,10 +205,10 @@ async function redeemPreAuthorizedOffer(page: Page, txCode?: string): Promise<vo
 export async function issueCredentialFromIssuerUsingPreAuthorizedCode(page: Page, credentialName: string): Promise<void> {
 	const txCode = await openIssuerPreAuthorizedOffer(page, credentialName);
 
-	// "Open in wwWallet" points at the wallet with the credential offer (its
+	// The primary wwWallet link points at the wallet with the credential offer (its
 	// /cb route renders Home and handles the offer). It opens in a new tab when
 	// a PIN is present, so navigate the wallet page to its href directly.
-	const walletOfferUrl = await page.getByRole('link', { name: 'Open in wwWallet', exact: true }).getAttribute('href');
+	const walletOfferUrl = await walletOfferLink(page).getAttribute('href');
 	if (!walletOfferUrl) {
 		throw new Error('Could not read the wwWallet offer link from the issuer offer page');
 	}
