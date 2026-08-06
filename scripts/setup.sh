@@ -23,9 +23,16 @@ WEBAUTHN_RP_NAME=Digital Wallet demo
 NOTIFICATIONS_ENABLED=false
 KEYS_DIR=$PWD/wallet-backend-server/keys
 OHTTP_GATEWAY_URL=http://localhost:4567
+# Local demo only: these claims are not backed by platform integrity evidence.
+DEV_WALLET_PROVIDER_ACCEPT_UNVERIFIED_EVIDENCE=true
+DEV_WALLET_PROVIDER_KEY_STORAGE=iso_18045_high
+DEV_WALLET_PROVIDER_USER_AUTHENTICATION=iso_18045_high
+DEV_WALLET_PROVIDER_CERTIFICATION=https://example.invalid/development-only
 EOF
 
 cp wallet-frontend/.env.template wallet-frontend/.env
+# Pair the frontend placeholder provider with the backend's local-only verifier.
+sed -i 's/^WALLET_PROVIDER_DEV_PLACEHOLDER_EVIDENCE=.*/WALLET_PROVIDER_DEV_PLACEHOLDER_EVIDENCE=true/' wallet-frontend/.env
 cp wallet-issuer/.env.template wallet-issuer/.env
 cp wallet-as/.env.template wallet-as/.env
 cp wallet-verifier/.env.template wallet-verifier/.env

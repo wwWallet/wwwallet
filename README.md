@@ -31,6 +31,10 @@ wwWallet is a modular reference implementation for verifiable credentials, provi
    ```sh
    yarn setup
    ```
+   This localhost-only setup enables placeholder Wallet Provider evidence so
+   the Key Attestation issuance flow runs without a native integrity SDK. Its
+   assurance claims are not trustworthy and must never be used in production;
+   the tracked frontend/backend templates keep this mode disabled by default.
 4. Start all services:
    ```sh
    yarn start
