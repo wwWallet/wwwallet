@@ -23,6 +23,9 @@ WEBAUTHN_RP_NAME=Digital Wallet demo
 NOTIFICATIONS_ENABLED=false
 KEYS_DIR=$PWD/wallet-backend-server/keys
 OHTTP_GATEWAY_URL=http://localhost:4567
+METADATA_FIDO_URL=https://c-mds.fidoalliance.org
+METADATA_COMMUNITY_AAGUID_URL=https://raw.githubusercontent.com/passkeydeveloper/passkey-authenticator-aaguids/main/aaguid.json
+METADATA_REFRESH_INTERVAL_MS=604800000
 EOF
 
 cp wallet-frontend/.env.template wallet-frontend/.env
