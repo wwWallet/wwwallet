@@ -1,19 +1,22 @@
 import { test, expect } from '@playwright/test';
-import { signUpNewWallet, issueCredential, presentCredentialsToVerifier, presentSelectableCredentialToVerifier } from './helpers';
+import {
+	signUpNewWallet,
+	issueCredential,
+	presentCredentialsToVerifier,
+	presentSelectableCredentialToVerifier,
+} from './helpers';
 
-// Every definition on wallet-verifier's catalog that doesn't need extra
-// setup beyond holding the right credentials (the QES/QC transaction-data
-// and custom-DCQL definitions aren't covered).
-
-test('presents every standard verifier definition', async ({ page, context }) => {
+// Standard definitions that use immediately issued credentials. Deferred POR
+// issuance is covered separately; QES/QC and custom DCQL need additional setup.
+test('presents standard verifier definitions using immediately issued credentials', async ({ page, context }) => {
 	await signUpNewWallet(page, context);
 
-	for (const credentialName of ['PID', 'EHIC', 'POR', 'Diploma']) {
+	for (const credentialName of ['PID', 'EHIC', 'Diploma']) {
 		await issueCredential(page, credentialName);
 		await expect(page.getByRole('button', { name: credentialName, exact: true })).toBeVisible({ timeout: 20_000 });
 	}
 
-	for (const definitionTitle of ['PID + EHIC', 'PID + POR', 'PID + Diploma']) {
+	for (const definitionTitle of ['PID + EHIC', 'PID + Diploma']) {
 		await presentCredentialsToVerifier(page, definitionTitle);
 		await expect(page.getByRole('heading', { name: 'Presentation Successful' })).toBeVisible({ timeout: 20_000 });
 	}

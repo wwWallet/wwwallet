@@ -80,9 +80,12 @@ file actually defines something):
     `test`/`test`). See `tests/issue-credentials.spec.ts` for the credential types currently
     covered (all from "wwWallet Issuer" — the separate "Digital Credentials Issuer" entries,
     including the `(deferred)` variants, aren't covered yet).
-  - `issueCredentialFromIssuer(page, credentialName)` — same flow, started from the issuer's own
-    site (`wallet-issuer`'s catalog at `:8003`) instead. See
-    `tests/issue-credentials-from-issuer.spec.ts`.
+  - `issueCredentialFromIssuerUsingAuthorizationCode(page, credentialName)` — same flow, started
+    from the issuer's own site (`wallet-issuer`'s catalog at `:8003`) using the authorization code
+    grant. See `tests/issue-credentials-from-issuer-authorization.spec.ts`.
+  - `issueCredentialFromIssuerUsingPreAuthorizedCode(page, credentialName)` — starts from the same
+    catalog using a pre-authorized code and enters the displayed transaction PIN when required. See
+    `tests/issue-credentials-from-issuer-pre-authorized.spec.ts`.
   - `issueCredentialByScanningQrCode(page, context, credentialName)` — same again, via the
     wallet's own QR scanner instead of clicking a link: it reads the exact QR contents off the
     issuer's offer page (in a separate tab) and feeds them into the wallet's camera APIs as a
@@ -101,13 +104,18 @@ file actually defines something):
   - `presentSelectableCredentialToVerifier(page, definitionTitle, fields)` — same, but for one of
     the three definitions where the verifier first lets you pick which claims to request
     (`"PID"`, `"Bachelor Diploma"`, `"EHIC"`); `fields` is `'all'` or `'one'`. See
-    `tests/present-credentials-to-verifier.spec.ts`, which covers all 9 of wallet-verifier's
-    standard definitions (the QES/QC transaction-data and custom-DCQL ones aren't covered).
+    `tests/present-credentials-to-verifier.spec.ts`, which covers the standard definitions backed
+    by immediately issued credentials. PID + POR is left to the dedicated deferred-POR issuance
+    tests; the QES/QC transaction-data and custom-DCQL definitions aren't covered.
+  - `presentCredentialsToVerifierByScanningQrCode(page, context, definitionTitle)` — opens the
+    verifier request in a second tab, scans its QR code with the wallet, and returns the verifier
+    page after its cross-device status poll completes. See
+    `tests/present-credentials-by-qr-scan.spec.ts`.
 - **`presentation.ts`** — `selectAndSendAllRequestedCredentials`, the shared walk through the
   wallet's verifier credential-selection popup, used by both `issuance.ts` (PID sign-in) and
   `verifier.ts`.
-- **`qr.ts`** — `mockCameraWithQrCode`, the camera-mocking internals behind
-  `issueCredentialByScanningQrCode`.
+- **`qr.ts`** — `mockCameraWithQrCode`, the camera-mocking internals behind QR-code issuance and
+  presentation tests.
 
 `tests/delete-credential.spec.ts` deletes one credential (not the whole account, unlike
 `delete-account.spec.ts`) and checks the rest of the account is untouched.

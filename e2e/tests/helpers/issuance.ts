@@ -3,6 +3,8 @@ import { selectAndSendAllRequestedCredentials } from './presentation';
 import { mockCameraWithQrCode } from './qr';
 import { ISSUER_URL, WALLET_URL, WALLET_AS_URL, WALLET_AS_USERNAME, WALLET_AS_PASSWORD, onService } from './config';
 
+export const DEFERRED_CREDENTIAL_TIMEOUT = 240_000;
+
 async function clickContinueRedirectPopup(page: Page): Promise<void> {
 	await page.locator('#continue-redirect-popup').click();
 	await page.waitForURL(onService(WALLET_AS_URL, /^\/interaction\//), { timeout: 20_000 });
@@ -152,12 +154,11 @@ async function openIssuerPreAuthorizedOffer(page: Page, credentialName: string):
 		.filter({ has: page.getByRole('heading', { name: credentialName, exact: true }) })
 		.click();
 
-	// The issuer authenticates the account via wallet-as, then redirects back to
-	// its own offer page (not the wallet). This flow has no consent screen —
-	// login redirects straight to the issuer callback.
+	// The issuer authenticates the account via wallet-as and then renders its
+	// offer. The final URL differs by deployment, so wait for the offer action.
 	await page.waitForURL(onService(WALLET_AS_URL, /^\/interaction\//), { timeout: 20_000 });
 	await fillWalletAsLogin(page);
-	await page.waitForURL(onService(ISSUER_URL, /^\/callback/), { timeout: 20_000 });
+	await walletOfferLink(page).waitFor({ state: 'visible', timeout: 20_000 });
 
 	// The offer page shows a transaction PIN only when the issuer is configured
 	// with a tx code length > 0 (local dev); qa issues without one, so it's

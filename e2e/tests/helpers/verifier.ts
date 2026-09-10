@@ -1,6 +1,13 @@
-import type { Page } from '@playwright/test';
+import type { Page, BrowserContext } from '@playwright/test';
 import { selectAndSendAllRequestedCredentials } from './presentation';
+import { mockCameraWithQrCode } from './qr';
 import { WALLET_URL, VERIFIER_URL, onService } from './config';
+
+async function openVerifierRequestPage(page: Page, definitionTitle: string): Promise<void> {
+	await page.goto(`${VERIFIER_URL}/verifier/public/definitions`);
+	await page.locator('a.def-card').filter({ has: page.getByText(definitionTitle, { exact: true }) }).click();
+	await page.waitForURL(/\/presentation-request\//, { timeout: 20_000 });
+}
 
 // Shared tail of every wallet-verifier presentation, once its request page
 // (with the "Open with wwWallet" button) is showing: ends on the verifier's
@@ -20,10 +27,27 @@ async function openInWwalletAndSendPresentation(page: Page): Promise<void> {
 // needs to already hold whatever credential types the chosen definition
 // requests.
 export async function presentCredentialsToVerifier(page: Page, definitionTitle: string): Promise<void> {
-	await page.goto(`${VERIFIER_URL}/verifier/public/definitions`);
-	await page.locator('a.def-card').filter({ has: page.getByText(definitionTitle, { exact: true }) }).click();
-	await page.waitForURL(/\/presentation-request\//, { timeout: 20_000 });
+	await openVerifierRequestPage(page, definitionTitle);
 	await openInWwalletAndSendPresentation(page);
+}
+
+export async function presentCredentialsToVerifierByScanningQrCode(page: Page, context: BrowserContext, definitionTitle: string): Promise<Page> {
+	const verifierPage = await context.newPage();
+	await openVerifierRequestPage(verifierPage, definitionTitle);
+	const qrText = await verifierPage.locator('input#authorizationRequestURL').inputValue();
+	if (!qrText) {
+		throw new Error('Could not read the QR code value from the verifier presentation request page');
+	}
+
+	await page.setViewportSize({ width: 390, height: 844 });
+	await mockCameraWithQrCode(page, qrText);
+	await page.locator('#bottom-nav-item-qr').click();
+
+	await page.waitForURL(onService(WALLET_URL, /^\/cb\?/), { timeout: 20_000 });
+	await selectAndSendAllRequestedCredentials(page);
+
+	await verifierPage.waitForURL(onService(VERIFIER_URL, /^\/verifier\/callback/), { timeout: 30_000 });
+	return verifierPage;
 }
 
 // Same as presentCredentialsToVerifier, but for a "_selectable: true"

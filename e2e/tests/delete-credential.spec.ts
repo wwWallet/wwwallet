@@ -11,6 +11,7 @@ test('deletes a single credential, leaving the rest of the account intact', asyn
 	await page.getByRole('button', { name: 'PID', exact: true }).click();
 	await page.waitForURL(/\/credential\//, { timeout: 20_000 });
 
+	await page.locator('#credential-actions-menu').click();
 	await page.locator('#credential-delete-button').click();
 	await page.locator('#confirm-delete-popup').click();
 
