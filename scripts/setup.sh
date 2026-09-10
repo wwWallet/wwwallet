@@ -23,6 +23,9 @@ WEBAUTHN_RP_NAME=Digital Wallet demo
 NOTIFICATIONS_ENABLED=false
 KEYS_DIR=$PWD/wallet-backend-server/keys
 OHTTP_GATEWAY_URL=http://localhost:4567
+METADATA_FIDO_URL=https://c-mds.fidoalliance.org
+METADATA_COMMUNITY_AAGUID_URL=https://raw.githubusercontent.com/passkeydeveloper/passkey-authenticator-aaguids/main/aaguid.json
+METADATA_REFRESH_INTERVAL_MS=604800000
 EOF
 
 cp wallet-frontend/.env.template wallet-frontend/.env
@@ -64,6 +67,7 @@ touch ./wallet-as/certs/.keep
 cp scripts/keystore/wallet_as_example_wwwallet_org.pem ./wallet-as/keys/pem.crt
 cp scripts/keystore/wallet_as_example_wwwallet_org.key.pkcs8 ./wallet-as/keys/pem.key
 cp scripts/keystore/wwwallet_org_iaca.pem ./wallet-as/certs/wwwallet_org_iaca.pem
+./scripts/gen-oidc-jwks.sh ./wallet-as/keys/oidc.jwks.json
 
 # Copy wallet backend server certificates and keys
 mkdir -p ./wallet-backend-server/keys/
