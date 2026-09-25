@@ -1,125 +1,80 @@
 # End-to-end tests
 
-Playwright tests that drive the wallet through a real browser, against the full local stack
-(`wallet-frontend` + `wallet-backend-server` + DB). They live outside any single module because
-they exercise the system as a whole, not one service in isolation.
+Playwright tests that exercise wwWallet through a real browser across the wallet, issuer,
+authorization server and verifier.
 
-## Prerequisites
+## Requirements
 
-These tests don't start anything themselves — they just point at `http://localhost:3000` and
-expect it to already be serving the wallet. You're responsible for starting everything first:
+The tests do not start services. The complete suite requires a running environment with:
 
-1. **Backend stack.** `tests/delete-account.spec.ts` only needs `wallet-backend-server` + the DB
-   up. `tests/issue-credentials.spec.ts` drives a full OpenID4VCI issuance flow, so it also needs
-   `wallet-issuer` (`:8003`) and `wallet-as`, the authorization server (`:6060`).
-   `tests/present-credentials-to-verifier.spec.ts` also needs `wallet-verifier` (`:8005`). Easiest
-   is the whole stack from the repo root:
-   ```sh
-   yarn start
-   ```
-2. **Frontend**, on port 3000. Either is fine (`yarn start` above already covers this too):
-   - Dev server: `yarn dev` (or `yarn start`) from `wallet-frontend/`.
-   - Production-ish build (closer to what real users get — minified bundle, service worker):
-     ```sh
-     cd wallet-frontend
-     yarn build -- --mode development && yarn preview
-     ```
-     `--mode development` matters: a plain `yarn build` loads `wallet-frontend/.env.production`,
-     which points at the real `qa.wwwallet.org` deployment instead of your local backend.
-     `--mode development` loads `.env`/`.env.development` instead, keeping everything local — and
-     also satisfies the `isDev` check that `oauth4webapi` requires to allow plain-HTTP requests
-     (see `wallet-frontend/src/lib/services/OpenID4VCI/OAuth/{TokenRequest,
-     PushedAuthorizationRequest}.ts`), so the issuance flow still works against your local backend.
-     The service worker still registers regardless of mode (`wallet-frontend/src/sw-register.js`
-     has no mode check). From the repo root, `yarn start:preview` does this for the whole stack at
-     once (frontend built this way, everything else in dev mode).
+- `wallet-frontend`, `wallet-backend-server` and the wallet database
+- `wallet-issuer`, `wallet-as`, its data store and `vct-registry` for issuance
+- `wallet-verifier` for presentation
+
+For local testing, start everything from the repository root:
+
+```sh
+yarn start
+```
+
+Use `yarn start:preview` instead to test a production-like frontend build.
 
 ## Install
 
+From the `e2e` directory:
+
 ```sh
 yarn install
+yarn playwright install chromium
 ```
+
+## Environment
+
+The suite targets local services by default. To use another environment, copy `.env.template` to
+`.env` and set `WALLET_URL`, `ISSUER_URL`, `WALLET_AS_URL` and `VERIFIER_URL`. Login credentials can
+be set with `WALLET_AS_USERNAME` and `WALLET_AS_PASSWORD`. Shell variables take precedence.
 
 ## Run
 
 ```sh
 yarn test
-# or, from the repo root:
+# or, from the repository root:
 yarn test:e2e
 ```
 
-## Watching a test run
-
-- `npx playwright test --headed` — visible browser window
-- `npx playwright test --ui` — interactive UI mode with timeline/time-travel (recommended)
-- `npx playwright test --headed --debug` — pauses before each action
-
-After a failure, replay the recorded run (DOM, console, network) with:
+The stress test is skipped by default. Run it explicitly with:
 
 ```sh
-npx playwright show-trace test-results/<test-folder>/trace.zip
+RUN_STRESS_TESTS=1 yarn playwright test tests/account-lifecycle-stress.spec.ts
+```
+
+## Debug
+
+```sh
+yarn playwright test --headed
+yarn playwright test --ui
+yarn playwright test --headed --debug
+```
+
+Playwright retains a trace when a test fails. Open it with:
+
+```sh
+yarn playwright show-trace test-results/<test-folder>/trace.zip
 ```
 
 ## Adding tests
 
-Add new spec files under `tests/`. Each test gets its own isolated browser context automatically.
-`tests/helpers/` has the shared building blocks, split by concern and re-exported from
-`tests/helpers/index.ts` (so `import { ... } from './helpers'` works the same regardless of which
-file actually defines something):
+Add specs under `tests/`. Shared helpers are exported from `tests/helpers/index.ts`:
 
-- **`auth.ts`** — account lifecycle.
-  - `signUpNewWallet(page, context)` — registers a simulated passkey (Chrome DevTools Protocol
-    virtual authenticator, with `hasPrf: true`, required by this wallet's WebAuthn PRF-based
-    signup flow) and signs up a new wallet, landing on the home page.
-  - `deleteAccount(page)`, plus the lower-level `setUpPasskeyAuthenticator` /
-    `clearPasskeyCredentials` / `replacePasskeyAuthenticator` / `signUp` used by tests that sign up
-    or delete more than once (see `tests/account-lifecycle-stress.spec.ts`).
-- **`issuance.ts`** — OpenID4VCI issuance, from every entry point:
-  - `issueCredential(page, listName)` — the wallet's own `/add` list (`listName` is its exact
-    display name there, e.g. `"PID mDoc"`) through wallet-as login/consent (demo account
-    `test`/`test`). See `tests/issue-credentials.spec.ts` for the credential types currently
-    covered (all from "wwWallet Issuer" — the separate "Digital Credentials Issuer" entries,
-    including the `(deferred)` variants, aren't covered yet).
-  - `issueCredentialFromIssuerUsingAuthorizationCode(page, credentialName)` — same flow, started
-    from the issuer's own site (`wallet-issuer`'s catalog at `:8003`) using the authorization code
-    grant. See `tests/issue-credentials-from-issuer-authorization.spec.ts`.
-  - `issueCredentialFromIssuerUsingPreAuthorizedCode(page, credentialName)` — starts from the same
-    catalog using a pre-authorized code and enters the displayed transaction PIN when required. See
-    `tests/issue-credentials-from-issuer-pre-authorized.spec.ts`.
-  - `issueCredentialByScanningQrCode(page, context, credentialName)` — same again, via the
-    wallet's own QR scanner instead of clicking a link: it reads the exact QR contents off the
-    issuer's offer page (in a separate tab) and feeds them into the wallet's camera APIs as a
-    real, decodable QR code, so the actual scan-and-decode UI runs end to end (see `qr.ts`). See
-    `tests/issue-credential-by-qr-scan.spec.ts`.
-  - `issueCredentialUsingPidSignIn(page, listName)` — same as `issueCredential`, but logs into
-    wallet-as with its "Sign in with PID" alternative (an OpenID4VP presentation of a PID the
-    account already holds) instead of the demo username/password. Requires a PID credential to
-    already be issued first, and only applies to scopes other than PID itself. See
-    `tests/issue-credential-sign-in-with-pid.spec.ts`.
-- **`verifier.ts`** — OpenID4VP presentations to `wallet-verifier` (`:8005`):
-  - `presentCredentialsToVerifier(page, definitionTitle)` — picks a fixed-combo request
-    definition on its site (e.g. `"PID + EHIC"`) through the wallet's credential-selection popup,
-    ending on the verifier's own result page. The account needs to already hold whatever
-    credential types that definition requests.
-  - `presentSelectableCredentialToVerifier(page, definitionTitle, fields)` — same, but for one of
-    the three definitions where the verifier first lets you pick which claims to request
-    (`"PID"`, `"Bachelor Diploma"`, `"EHIC"`); `fields` is `'all'` or `'one'`. See
-    `tests/present-credentials-to-verifier.spec.ts`, which covers the standard definitions backed
-    by immediately issued credentials. PID + POR is left to the dedicated deferred-POR issuance
-    tests; the QES/QC transaction-data and custom-DCQL definitions aren't covered.
-  - `presentCredentialsToVerifierByScanningQrCode(page, context, definitionTitle)` — opens the
-    verifier request in a second tab, scans its QR code with the wallet, and returns the verifier
-    page after its cross-device status poll completes. See
-    `tests/present-credentials-by-qr-scan.spec.ts`.
-- **`presentation.ts`** — `selectAndSendAllRequestedCredentials`, the shared walk through the
-  wallet's verifier credential-selection popup, used by both `issuance.ts` (PID sign-in) and
-  `verifier.ts`.
-- **`qr.ts`** — `mockCameraWithQrCode`, the camera-mocking internals behind QR-code issuance and
-  presentation tests.
+- `auth.ts` manages passkey-backed account creation and deletion.
+- `issuance.ts` covers the OpenID4VCI Authorization Code and Pre-Authorized Code flows through
+  links and QR codes, plus authorization by presenting an existing PID.
+- `verifier.ts` covers OpenID4VP presentation through links and QR codes.
+- `presentation.ts` handles credential selection for presentation requests.
+- `qr.ts` feeds real QR-code data into mocked browser camera APIs.
 
-`tests/delete-credential.spec.ts` deletes one credential (not the whole account, unlike
-`delete-account.spec.ts`) and checks the rest of the account is untouched.
+Each test receives an isolated browser context, and the suite runs one test at a time because the
+services are shared.
 
-Not covered: the "Digital Credentials Issuer" entries on `/add` (including its `(deferred)`
-variants) resolve to an external third-party service (`dev.issuer-backend.eudiw.dev`), not the
-local stack, so they're intentionally left untested here.
+The external "Digital Credentials Issuer" entries on `/add` are intentionally not tested because
+they do not use the local stack.
