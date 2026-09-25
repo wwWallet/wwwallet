@@ -75,6 +75,3 @@ Add specs under `tests/`. Shared helpers are exported from `tests/helpers/index.
 
 Each test receives an isolated browser context, and the suite runs one test at a time because the
 services are shared.
-
-The external "Digital Credentials Issuer" entries on `/add` are intentionally not tested because
-they do not use the local stack.

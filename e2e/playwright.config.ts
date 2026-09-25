@@ -10,10 +10,9 @@ export default defineConfig({
 	workers: 1,
 	reporter: 'list',
 	use: {
-		// The full stack (frontend + wallet-backend-server + DB) is expected to
-		// already be running before these tests start; see README.md. Override
-		// WALLET_URL (and the other service URLs in tests/helpers/config.ts) to
-		// point the suite at another deployment.
+		// The required services must already be running; see README.md. Override
+		// WALLET_URL and the other service URLs in tests/helpers/config.ts to point
+		// the suite at another environment.
 		baseURL: WALLET_URL,
 		trace: 'retain-on-failure',
 	},
