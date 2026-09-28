@@ -14,7 +14,7 @@ wwWallet is a modular reference implementation for verifiable credentials, provi
 
 ## 🔍 Prerequisites
 
-- Node.js (recommended 22 or later)
+- Node.js (version 24 or later)
 - Yarn (recommended: 1.x)
 - Docker & Docker Compose
 
