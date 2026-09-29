@@ -16,7 +16,6 @@ services:
       MARIADB_USER: myuser
       MARIADB_PASSWORD:
       MYSQL_TCP_PORT: 3307
-      MYSQL_UNIX_PORT: 3307
     healthcheck:
       test: ["CMD", "mariadb" ,"-uroot", "-proot", "--protocol=TCP", "-hlocalhost", "--port=3307",  "-estatus"]
       start_period: 60s
