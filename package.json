@@ -5,7 +5,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.4"
   },
   "scripts": {
     "setup": "./scripts/setup.sh",
