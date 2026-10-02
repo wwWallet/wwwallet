@@ -6,27 +6,8 @@
 ./scripts/gen-dsc-keys.sh example wallet_verifier
 ./scripts/gen-dsc-keys.sh example wallet_as
 
-cp wallet-backend-server/config/config.template.ts  wallet-backend-server/config/index.ts
-cat <<EOF > wallet-backend-server/.env
-APP_URL=http://localhost:8002
-APP_SECRET=dsfkwfkwfwdfdsfSaSe2e34r4frwr42rAFdsf2lfmfsmklfwmer
-PORT=8002
-DB_HOST=localhost
-DB_PORT=3307
-DB_USER=root
-DB_PASSWORD=root
-DB_NAME=wallet
-WALLET_CLIENT_URL=http://localhost:3000/cb
-WEBAUTHN_ORIGIN=http://localhost:3000
-WEBAUTHN_RP_ID=localhost
-WEBAUTHN_RP_NAME=Digital Wallet demo
-NOTIFICATIONS_ENABLED=false
-KEYS_DIR=$PWD/wallet-backend-server/keys
-OHTTP_GATEWAY_URL=http://localhost:4567
-METADATA_FIDO_URL=https://c-mds.fidoalliance.org
-METADATA_COMMUNITY_AAGUID_URL=https://raw.githubusercontent.com/passkeydeveloper/passkey-authenticator-aaguids/main/aaguid.json
-METADATA_REFRESH_INTERVAL_MS=604800000
-EOF
+sed "s/^APP_SECRET=.*/APP_SECRET=$(openssl rand -hex 32)/" wallet-backend-server/.env.template > wallet-backend-server/.env
+echo "KEYS_DIR=$PWD/wallet-backend-server/keys" >> wallet-backend-server/.env
 
 cp wallet-frontend/.env.template wallet-frontend/.env
 cp wallet-issuer/.env.template wallet-issuer/.env
