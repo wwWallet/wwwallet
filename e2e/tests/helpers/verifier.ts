@@ -1,0 +1,72 @@
+import type { Page, BrowserContext } from '@playwright/test';
+import { selectAndSendAllRequestedCredentials } from './presentation';
+import { mockCameraWithQrCode } from './qr';
+import { WALLET_URL, VERIFIER_URL, onService } from './config';
+
+async function openVerifierRequestPage(page: Page, definitionTitle: string): Promise<void> {
+	await page.goto(`${VERIFIER_URL}/verifier/public/definitions`);
+	await page.locator('a.def-card').filter({ has: page.getByText(definitionTitle, { exact: true }) }).click();
+	await page.waitForURL(/\/presentation-request\//, { timeout: 20_000 });
+}
+
+// Shared tail of every wallet-verifier presentation, once its request page
+// (with the "Open with wwWallet" button) is showing: ends on the verifier's
+// own "Presentation Successful" result page.
+async function openInWwalletAndSendPresentation(page: Page): Promise<void> {
+	await page.getByRole('button', { name: 'Open with wwWallet', exact: true }).click();
+	// The verifier hands the OpenID4VP request to the wallet either at /cb (local
+	// stack) or at the app root (e.g. qa), both carrying the request in the query.
+	await page.waitForURL(onService(WALLET_URL, /^\/(cb)?\?/), { timeout: 20_000 });
+
+	await selectAndSendAllRequestedCredentials(page);
+	await page.waitForURL(onService(VERIFIER_URL, /^\/verifier\/callback/), { timeout: 20_000 });
+}
+
+// Presents credentials to wallet-verifier: pick a definition card from its
+// catalog (e.g. "PID + EHIC"), then send whatever it asks for. The account
+// needs to already hold whatever credential types the chosen definition
+// requests.
+export async function presentCredentialsToVerifier(page: Page, definitionTitle: string): Promise<void> {
+	await openVerifierRequestPage(page, definitionTitle);
+	await openInWwalletAndSendPresentation(page);
+}
+
+export async function presentCredentialsToVerifierByScanningQrCode(page: Page, context: BrowserContext, definitionTitle: string): Promise<Page> {
+	const verifierPage = await context.newPage();
+	await openVerifierRequestPage(verifierPage, definitionTitle);
+	const qrText = await verifierPage.locator('input#authorizationRequestURL').inputValue();
+	if (!qrText) {
+		throw new Error('Could not read the QR code value from the verifier presentation request page');
+	}
+
+	await page.setViewportSize({ width: 390, height: 844 });
+	await mockCameraWithQrCode(page, qrText);
+	await page.locator('#bottom-nav-item-qr').click();
+
+	await page.waitForURL(onService(WALLET_URL, /^\/cb\?/), { timeout: 20_000 });
+	await selectAndSendAllRequestedCredentials(page);
+
+	await verifierPage.waitForURL(onService(VERIFIER_URL, /^\/verifier\/callback/), { timeout: 30_000 });
+	return verifierPage;
+}
+
+// Same as presentCredentialsToVerifier, but for a "_selectable: true"
+// definition (PID, Bachelor Diploma, EHIC), which routes through an extra
+// claim-picking step first. `fields` chooses between requesting every
+// offered claim or just the first one. The checkboxes are styled with a
+// custom overlay that blocks plain clicks, hence `force: true`.
+export async function presentSelectableCredentialToVerifier(page: Page, definitionTitle: string, fields: 'all' | 'one'): Promise<void> {
+	await page.goto(`${VERIFIER_URL}/verifier/public/definitions`);
+	await page.locator('a.def-card').filter({ has: page.getByText(definitionTitle, { exact: true }) }).click();
+	await page.waitForURL(/\/request-credentials\//, { timeout: 20_000 });
+
+	if (fields === 'all') {
+		await page.locator('#select-all-attributes').check({ force: true });
+	} else {
+		await page.locator('input[name="attributes[]"]').first().check({ force: true });
+	}
+	await page.getByRole('button', { name: 'Request Credentials', exact: true }).click();
+
+	await page.waitForURL(/\/presentation-request\//, { timeout: 20_000 });
+	await openInWwalletAndSendPresentation(page);
+}
