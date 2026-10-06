@@ -163,12 +163,11 @@ async function openIssuerPreAuthorizedOffer(page: Page, credentialName: string):
 	// The offer page shows a transaction PIN only when the issuer is configured
 	// with a tx code length > 0 (local dev); qa issues without one, so it's
 	// optional.
-	const txCodeElement = page.locator('.offer-pin-callout__code, .tx-code').first();
-	if (await txCodeElement.count() === 0) {
+	const txCodeElement = page.locator('.offer-pin-callout__code').first();
+	if (await txCodeElement.count() === 0 || !(await txCodeElement.isVisible())) {
 		return undefined;
 	}
-	const pinText = await txCodeElement.textContent();
-	const txCode = pinText?.match(/\d+/)?.[0];
+	const txCode = (await txCodeElement.textContent())?.trim();
 	if (!txCode) {
 		throw new Error('Could not read the transaction PIN from the issuer offer page');
 	}
@@ -187,14 +186,14 @@ async function redeemPreAuthorizedOffer(page: Page, txCode?: string): Promise<vo
 	} catch {
 		// No redirect-consent popup; the wallet redeems directly.
 	}
-	if (!txCode) {
+	if (txCode === undefined) {
 		return;
 	}
 
-	const digits = txCode.split('');
 	const pinInputs = page.locator('input[autocomplete="one-time-code"]');
-	for (let i = 0; i < digits.length; i++) {
-		await pinInputs.nth(i).fill(digits[i]);
+	await pinInputs.first().waitFor({ state: 'visible', timeout: 10_000 });
+	for (const [index, digit] of txCode.split('').entries()) {
+		await pinInputs.nth(index).fill(digit);
 	}
 	await page.locator('#submit-pin-input').click();
 }
