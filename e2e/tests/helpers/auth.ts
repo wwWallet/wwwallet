@@ -90,11 +90,21 @@ async function autoDismissSyncPopup(page: Page): Promise<void> {
 // authenticator and immediately signs up. Shared by every test that needs an
 // authenticated session to start from.
 export async function signUpNewWallet(page: Page, context: BrowserContext): Promise<string> {
-	await setUpPasskeyAuthenticator(page, context);
+	const { walletName } = await signUpNewWalletWithAuthenticator(page, context);
+	return walletName;
+}
+
+export async function signUpNewWalletWithAuthenticator(page: Page, context: BrowserContext): Promise<{
+	walletName: string,
+	client: CDPSession,
+	authenticatorId: string,
+}> {
+	const { client, authenticatorId } = await setUpPasskeyAuthenticator(page, context);
 	// Force English so text-based selectors don't depend on the test runner's locale.
 	await page.addInitScript(() => localStorage.setItem('locale', 'en'));
 	await autoDismissSyncPopup(page);
-	return signUp(page);
+	const walletName = await signUp(page);
+	return { walletName, client, authenticatorId };
 }
 
 // Deletes the currently signed-in account from settings, ending back on /login.
