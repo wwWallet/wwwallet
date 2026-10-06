@@ -175,18 +175,11 @@ async function openIssuerPreAuthorizedOffer(page: Page, credentialName: string):
 	return txCode;
 }
 
-// Redeems a pre-authorized offer already open in the wallet: confirms the
-// redirect-consent popup (skipped when qa redeems directly), then — if the
-// offer carried a transaction PIN — enters it, one single-character input per
-// digit, and submits.
+// Redeems a pre-authorized offer already open in the wallet. If the offer
+// carried a transaction PIN, enters it one single-character input per digit
+// and submits. Pre-authorized offers are redeemed directly and do not show the
+// redirect-consent popup used by authorization-code offers.
 async function redeemPreAuthorizedOffer(page: Page, txCode?: string): Promise<void> {
-	const continueButton = page.locator('#continue-redirect-popup');
-	try {
-		await continueButton.waitFor({ state: 'visible', timeout: 5_000 });
-		await continueButton.click();
-	} catch {
-		// No redirect-consent popup; the wallet redeems directly.
-	}
 	if (!txCode) {
 		return;
 	}
