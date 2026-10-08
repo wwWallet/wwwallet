@@ -6,7 +6,6 @@ WALLET_BACKEND_REPOSITORY="wwwallet/wallet-backend-server"
 WALLET_AS_REPOSITORY="wwwallet/wallet-as"
 WALLET_ISSUER_REPOSITORY="wwwallet/wallet-issuer"
 WALLET_VERIFIER_REPOSITORY="wwwallet/wallet-verifier"
-WALLET_COMMON_REPOSITORY="wwwallet/wallet-common"
 
 print_help() {
   cat <<EOF
@@ -18,6 +17,8 @@ Options:
 
 Behavior:
   - Creates draft prereleases in all configured repositories
+  - wallet-common is not included: it is versioned independently
+    (semantic-release in its own repository)
 EOF
 }
 
@@ -58,7 +59,6 @@ gh release create ${ver} --generate-notes --title "${title}" --prerelease --repo
 gh release create ${ver} --generate-notes --title "${title}" --prerelease --repo "${WALLET_AS_REPOSITORY}" --draft
 gh release create ${ver} --generate-notes --title "${title}" --prerelease --repo "${WALLET_ISSUER_REPOSITORY}" --draft
 gh release create ${ver} --generate-notes --title "${title}" --prerelease --repo "${WALLET_VERIFIER_REPOSITORY}" --draft
-gh release create ${ver} --generate-notes --title "${title}" --prerelease --repo "${WALLET_COMMON_REPOSITORY}" --draft
 gh release create ${ver} --generate-notes --title "${title}" --prerelease --repo "${WWWALLET_REPOSITORY}" --draft
 
 echo "Drafts created..."
