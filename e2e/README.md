@@ -50,7 +50,12 @@ RUN_STRESS_TESTS=1 yarn playwright test tests/account-lifecycle-stress.spec.ts
 
 The offline PWA tests require a deployed HTTPS wallet because they exercise the production service
 worker. They are skipped unless `WALLET_URL` uses HTTPS and a non-local hostname (`localhost`,
-`127.0.0.1`, and `::1` are excluded). Run them against an HTTPS environment with:
+`127.0.0.1`, and `::1` are excluded). The suite covers cached app-shell startup plus a complete
+signup, issuance, presentation, offline logout, offline passkey login, credential-image, and
+presentation-history lifecycle. Cached sidebar navigation and the Add Credentials catalogue are
+also checked offline, including disabled issuance actions. The suite verifies that reconnecting
+requires and completes the online passkey synchronization flow before issuance and normal online
+navigation are restored. Run it against an HTTPS environment with:
 
 ```sh
 WALLET_URL=https://wallet.example.org yarn playwright test tests/offline.spec.ts

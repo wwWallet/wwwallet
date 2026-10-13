@@ -77,24 +77,32 @@ export async function signUp(page: Page, walletName: string = `Playwright Wallet
 // account's private data changed server-side (e.g. once a deferred credential
 // resolves), which overlays the page and blocks the test. Auto-complete its
 // passkey re-sync whenever it appears; it never shows on the local stack.
-async function autoDismissSyncPopup(page: Page): Promise<void> {
+
+async function autoDismissSyncPopup(page: Page): Promise<() => Promise<void>> {
+	const continueLogin = page.locator('#continue-login-state');
 	await page.addLocatorHandler(
-		page.locator('#continue-login-state'),
+		continueLogin,
 		async (popup) => {
 			await popup.click();
 		},
 	);
+
+	return () => page.removeLocatorHandler(continueLogin);
 }
 
 // Convenience wrapper for tests that only sign up once: sets up the
-// authenticator and immediately signs up. Shared by every test that needs an
-// authenticated session to start from.
-export async function signUpNewWallet(page: Page, context: BrowserContext): Promise<string> {
+// authenticator and immediately signs up. The returned cleanup callback lets
+// tests that exercise the synchronization UI disable the automatic QA handler.
+export async function signUpNewWallet(
+	page: Page,
+	context: BrowserContext,
+): Promise<{ walletName: string, stopAutoSyncPopupHandler: () => Promise<void> }> {
 	await setUpPasskeyAuthenticator(page, context);
 	// Force English so text-based selectors don't depend on the test runner's locale.
 	await page.addInitScript(() => localStorage.setItem('locale', 'en'));
-	await autoDismissSyncPopup(page);
-	return signUp(page);
+	const stopAutoSyncPopupHandler = await autoDismissSyncPopup(page);
+	const walletName = await signUp(page);
+	return { walletName, stopAutoSyncPopupHandler };
 }
 
 // Deletes the currently signed-in account from settings, ending back on /login.

@@ -1,7 +1,11 @@
 import { test, expect } from '@playwright/test';
-import type { Page } from '@playwright/test';
-import { issueCredential, signUpNewWallet } from './helpers';
-import { WALLET_URL } from './helpers/config';
+import type { Locator, Page } from '@playwright/test';
+import {
+	issueCredential,
+	presentSelectableCredentialToVerifier,
+	signUpNewWallet,
+} from './helpers';
+import { onService, WALLET_URL } from './helpers/config';
 
 const walletTarget = new URL(WALLET_URL);
 const localHostnames = new Set(['localhost', '127.0.0.1', '::1']);
@@ -19,6 +23,25 @@ async function waitForServiceWorkerControl(page: Page): Promise<void> {
 			timeout: 30_000,
 		},
 	).toBe(true);
+}
+
+async function expectImagesLoaded(images: Locator): Promise<void> {
+	await expect(images.first()).toBeVisible({ timeout: 20_000 });
+	await expect.poll(
+		() => images.evaluateAll((elements) => elements.every((image) => {
+			const element = image as HTMLImageElement;
+			return Boolean(element.getAttribute('src')) && element.complete && element.naturalWidth > 0;
+		})),
+		{
+			message: 'the expected images should load successfully',
+			timeout: 20_000,
+		},
+	).toBe(true);
+}
+
+async function navigateFromSidebar(page: Page, item: 'credentials' | 'add' | 'activity', path: RegExp): Promise<void> {
+	await page.locator(`#sidebar-item-${item}`).click();
+	await page.waitForURL(onService(WALLET_URL, path), { timeout: 20_000 });
 }
 
 test.describe('offline PWA usage', () => {
@@ -41,28 +64,110 @@ test.describe('offline PWA usage', () => {
 		}
 	});
 
-	test('keeps an issued credential available across offline navigation', async ({ page, context }) => {
-		await signUpNewWallet(page, context);
-		await issueCredential(page, 'PID');
+	test('restores the wallet offline and requires synchronization when reconnecting', async ({ page, context }) => {
+		test.setTimeout(180_000);
 
 		const credentialCard = page.getByRole('button', { name: 'PID', exact: true });
-		await expect(credentialCard).toBeVisible({ timeout: 20_000 });
-		await credentialCard.click();
-		await page.waitForURL(/\/credential\//, { timeout: 20_000 });
-		await expect(page.getByRole('heading', { name: 'PID', exact: true })).toBeVisible();
-		await waitForServiceWorkerControl(page);
+		const credentialImage = credentialCard.locator('img[alt="Credential"]');
+		const pidOffer = page.locator('[id^="querylist-main-"]').filter({
+			has: page.getByText('PID', { exact: true }),
+		});
+
+		const { walletName, stopAutoSyncPopupHandler } = await test.step('prepare and cache an active wallet', async () => {
+			const walletSession = await signUpNewWallet(page, context);
+			await issueCredential(page, 'PID');
+
+			await expect(credentialCard).toBeVisible({ timeout: 20_000 });
+			await expectImagesLoaded(credentialImage);
+
+			await presentSelectableCredentialToVerifier(page, 'PID', 'all');
+			await expect(page.getByRole('heading', { name: 'Presentation Successful' })).toBeVisible({ timeout: 20_000 });
+
+			// The verifier is a separate origin, so returning to the wallet cannot use
+			// the wallet's internal navigation.
+			await page.goto('/');
+			await expect(credentialCard).toBeVisible({ timeout: 20_000 });
+			await waitForServiceWorkerControl(page);
+
+			return walletSession;
+		});
 
 		await context.setOffline(true);
 		try {
-			// A reload exercises the service worker's app-shell fallback for a deep route.
-			await page.reload({ waitUntil: 'domcontentloaded' });
-			await expect(page.getByRole('heading', { name: 'PID', exact: true })).toBeVisible();
-			await expect(page.locator('#close-message-offline')).toBeVisible({ timeout: 10_000 });
+			await test.step('reload the cached wallet while offline', async () => {
+				await page.reload({ waitUntil: 'domcontentloaded' });
+				await expect(credentialCard).toBeVisible({ timeout: 20_000 });
+				await expect(page.locator('#close-message-offline')).toBeVisible({ timeout: 10_000 });
+				await expectImagesLoaded(credentialImage);
+			});
 
-			// This is a new document navigation, not just React Router state, so it also
-			// proves the home app shell and IndexedDB-backed credential are available offline.
-			await page.goto('/');
-			await expect(page.getByRole('button', { name: 'PID', exact: true })).toBeVisible();
+			await test.step('log out and sign back in offline', async () => {
+				// Reload after logout to discard in-memory React and credential-image caches.
+				await page.locator('#sidebar-item-logout').click();
+				await page.waitForURL(onService(WALLET_URL, /^\/login(?:\?|$)/), { timeout: 20_000 });
+				await page.reload({ waitUntil: 'domcontentloaded' });
+
+				await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+				await expect(page.getByText('You are offline. Some features may not be available.')).toBeVisible();
+				const cachedAccount = page.getByRole('button', { name: `Sign in as ${walletName}`, exact: true });
+				await expect(cachedAccount).toBeVisible();
+				await cachedAccount.click();
+
+				await page.waitForURL(onService(WALLET_URL, /^\/(?:\?|$)/), { timeout: 20_000 });
+				await expect(credentialCard).toBeVisible({ timeout: 20_000 });
+				await expect(page.locator('#close-message-offline')).toBeVisible({ timeout: 10_000 });
+				await expectImagesLoaded(credentialImage);
+			});
+
+			await test.step('navigate cached wallet pages offline', async () => {
+				await credentialCard.click();
+				await page.waitForURL(/\/credential\//, { timeout: 20_000 });
+				await expect(page.getByRole('heading', { name: 'PID', exact: true })).toBeVisible();
+				await expectImagesLoaded(page.locator('#show-full-screen-credential img[alt="Credential"]'));
+
+				await navigateFromSidebar(page, 'add', /^\/add(?:\?|$)/);
+				await expect(page.getByRole('heading', { name: 'Add Credentials', exact: true })).toBeVisible();
+				await expect(pidOffer).toBeVisible({ timeout: 20_000 });
+				await expect(pidOffer).toBeDisabled();
+				await expectImagesLoaded(pidOffer.locator('img'));
+
+				await navigateFromSidebar(page, 'activity', /^\/activity(?:\?|$)/);
+				await expect(page.getByRole('heading', { name: 'Activity', exact: true })).toBeVisible();
+				await expect(page.locator('[id^="credential-activity-item-"]')).toHaveCount(1, { timeout: 20_000 });
+			});
+
+			await test.step('reconnect and synchronize the wallet', async () => {
+				await stopAutoSyncPopupHandler();
+				await context.setOffline(false);
+
+				const syncAction = page.locator('#resync-notification-action');
+				await expect(syncAction).toBeVisible({ timeout: 20_000 });
+				await expect(page.getByText("You're back online. Would you like to resync your wallet?")).toBeVisible();
+				await expect(page.locator('#close-message-offline')).not.toBeVisible();
+				await syncAction.click();
+
+				const continueSync = page.locator('#continue-login-state');
+				await expect(continueSync).toBeVisible();
+				await continueSync.click();
+
+				await expect(syncAction).not.toBeVisible({ timeout: 20_000 });
+				await expect.poll(
+					() => new URL(page.url()).searchParams.has('sync'),
+					{ timeout: 20_000 },
+				).toBe(false);
+				await expect(page.getByRole('heading', { name: 'Activity', exact: true })).toBeVisible();
+				await expect(page.locator('[id^="credential-activity-item-"]')).toHaveCount(1);
+			});
+
+			await test.step('verify online functionality is restored', async () => {
+				await navigateFromSidebar(page, 'add', /^\/add(?:\?|$)/);
+				await expect(page.getByRole('heading', { name: 'Add Credentials', exact: true })).toBeVisible();
+				await expect(pidOffer).toBeEnabled({ timeout: 20_000 });
+
+				await navigateFromSidebar(page, 'credentials', /^\/(?:\?|$)/);
+				await expect(credentialCard).toBeVisible({ timeout: 20_000 });
+				await expectImagesLoaded(credentialImage);
+			});
 		} finally {
 			await context.setOffline(false);
 		}
