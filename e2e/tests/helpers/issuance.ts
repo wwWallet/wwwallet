@@ -67,23 +67,31 @@ async function completeWalletAsAuthorizationWithPidSignIn(page: Page): Promise<v
 	await approveWalletAsConsent(page);
 }
 
-// Drives the full OpenID4VCI authorization code flow for one credential type,
-// from the /add list through wallet-as login/consent, ending back on the
-// wallet's home page. `listName` is the credential's exact display name as
-// shown in the /add list (e.g. "PID mDoc") — list items render an avatar
-// initial and an issuer badge alongside it, so matching on exact text rather
-// than the button's full (concatenated) accessible name avoids ambiguity
+// Completes the OpenID4VCI authorization code flow from an already-open Add
+// Credentials page, ending back on the wallet's home page. `listName` is the
+// exact display name shown in the list (e.g. "PID mDoc") — list items render
+// an avatar initial and issuer badge too, so exact nested text avoids ambiguity
 // between e.g. "PID" and "PID mDoc".
-export async function issueCredential(page: Page, listName: string): Promise<void> {
-	await page.goto('/add');
+export async function issueCredentialFromAddPage(page: Page, listName: string): Promise<void> {
 	await page.getByRole('button').filter({ has: page.getByText(listName, { exact: true }) }).click();
 	await completeWalletAsAuthorization(page);
+}
+
+async function openAddCredentialsFromWallet(page: Page): Promise<void> {
+	await page.locator('#sidebar-item-add').click();
+	await page.waitForURL(onService(WALLET_URL, /^\/add(?:\?|$)/), { timeout: 20_000 });
+}
+
+// Navigate through the wallet menu and issue one credential.
+export async function issueCredential(page: Page, listName: string): Promise<void> {
+	await openAddCredentialsFromWallet(page);
+	await issueCredentialFromAddPage(page, listName);
 }
 
 // Same as issueCredential, but requires a PID credential already issued and
 // `listName` to be a type other than PID itself.
 export async function issueCredentialUsingPidSignIn(page: Page, listName: string): Promise<void> {
-	await page.goto('/add');
+	await openAddCredentialsFromWallet(page);
 	await page.getByRole('button').filter({ has: page.getByText(listName, { exact: true }) }).click();
 	await completeWalletAsAuthorizationWithPidSignIn(page);
 }
