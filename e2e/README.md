@@ -53,9 +53,11 @@ worker. They are skipped unless `WALLET_URL` uses HTTPS and a non-local hostname
 `127.0.0.1`, and `::1` are excluded). The suite covers cached app-shell startup plus a complete
 signup, issuance, presentation, offline logout, offline passkey login, credential-image, and
 presentation-history lifecycle. Cached sidebar navigation and the Add Credentials catalogue are
-also checked offline, including disabled issuance actions. The suite verifies that reconnecting
-requires and completes the online passkey synchronization flow before issuance and normal online
-navigation are restored. Run it against an HTTPS environment with:
+also checked offline, including disabled issuance actions. Cached credential, Add Credentials,
+Activity, and Settings routes are hard-reloaded to exercise the service worker's app-shell
+fallback, and network-dependent Settings actions are verified as disabled. The suite verifies that
+reconnecting requires and completes the online passkey synchronization flow before issuance and
+normal online navigation are restored. Run it against an HTTPS environment with:
 
 ```sh
 WALLET_URL=https://wallet.example.org yarn playwright test tests/offline.spec.ts
