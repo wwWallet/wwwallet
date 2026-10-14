@@ -1,0 +1,58 @@
+name: Bug report
+description: Create a report to help us improve
+body:
+  - type: textarea
+    id: describe-the-bug
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+
+  - type: textarea
+    id: to-reproduce
+    attributes:
+      label: To Reproduce
+      description: Describe how to reproduce the issue with setup, startup, builds, or interactions between components. Include the commands you ran and any relevant configuration.
+      value: |
+        1. Start from '...' (fresh checkout or existing setup).
+        2. Set up or configure the stack with '...'.
+        3. Run the command or perform the action that triggers the issue '...'.
+        4. Observe the error or incorrect result '...'.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: If applicable, add screenshots to help explain your problem.
+
+  - type: textarea
+    id: environment-information
+    attributes:
+      label: Environment information (if available)
+      description: Please complete the lines that apply.
+      value: |
+        - wwwallet version, commit, or release:
+        - Affected component(s) and their versions, commits or image tags:
+        - Deployment method: [Docker / source]
+        - Node version (if running from source):
+        - Docker and Docker Compose versions (if applicable):
+        - Server OS:
+        - Device and OS (if applicable):
+        - Browser and version (if applicable):
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Add any other context about the problem here.
