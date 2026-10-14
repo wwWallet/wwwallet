@@ -31,6 +31,8 @@ wwWallet is a modular reference implementation for verifiable credentials, provi
    ```sh
    yarn setup
    ```
+   Each run overwrites environment files and regenerates secrets, including
+   the backend `APP_SECRET` and AS `ABCA_CHALLENGE_SECRET`.
 4. Start all services:
    ```sh
    yarn start
