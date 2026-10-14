@@ -39,7 +39,11 @@ async function expectImagesLoaded(images: Locator): Promise<void> {
 	).toBe(true);
 }
 
-async function navigateFromSidebar(page: Page, item: 'credentials' | 'add' | 'activity', path: RegExp): Promise<void> {
+async function navigateFromSidebar(
+	page: Page,
+	item: 'credentials' | 'add' | 'activity' | 'settings',
+	path: RegExp,
+): Promise<void> {
 	await page.locator(`#sidebar-item-${item}`).click();
 	await page.waitForURL(onService(WALLET_URL, path), { timeout: 20_000 });
 }
@@ -124,8 +128,16 @@ test.describe('offline PWA usage', () => {
 				await page.waitForURL(/\/credential\//, { timeout: 20_000 });
 				await expect(page.getByRole('heading', { name: 'PID', exact: true })).toBeVisible();
 				await expectImagesLoaded(page.locator('#show-full-screen-credential img[alt="Credential"]'));
+				await page.reload({ waitUntil: 'domcontentloaded' });
+				await expect(page.getByRole('heading', { name: 'PID', exact: true })).toBeVisible();
+				await expectImagesLoaded(page.locator('#show-full-screen-credential img[alt="Credential"]'));
 
 				await navigateFromSidebar(page, 'add', /^\/add(?:\?|$)/);
+				await expect(page.getByRole('heading', { name: 'Add Credentials', exact: true })).toBeVisible();
+				await expect(pidOffer).toBeVisible({ timeout: 20_000 });
+				await expect(pidOffer).toBeDisabled();
+				await expectImagesLoaded(pidOffer.locator('img'));
+				await page.reload({ waitUntil: 'domcontentloaded' });
 				await expect(page.getByRole('heading', { name: 'Add Credentials', exact: true })).toBeVisible();
 				await expect(pidOffer).toBeVisible({ timeout: 20_000 });
 				await expect(pidOffer).toBeDisabled();
@@ -134,6 +146,30 @@ test.describe('offline PWA usage', () => {
 				await navigateFromSidebar(page, 'activity', /^\/activity(?:\?|$)/);
 				await expect(page.getByRole('heading', { name: 'Activity', exact: true })).toBeVisible();
 				await expect(page.locator('[id^="credential-activity-item-"]')).toHaveCount(1, { timeout: 20_000 });
+				await page.reload({ waitUntil: 'domcontentloaded' });
+				await expect(page.getByRole('heading', { name: 'Activity', exact: true })).toBeVisible();
+				await expect(page.locator('[id^="credential-activity-item-"]')).toHaveCount(1, { timeout: 20_000 });
+			});
+
+			await test.step('reload settings and verify offline action guards', async () => {
+				await navigateFromSidebar(page, 'settings', /^\/settings(?:\?|$)/);
+				await expect(page.getByRole('heading', { name: 'Settings', exact: true })).toBeVisible();
+				await page.reload({ waitUntil: 'domcontentloaded' });
+				await expect(page.getByRole('heading', { name: 'Settings', exact: true })).toBeVisible();
+
+				await expect(page.getByRole('combobox', { name: 'Language' })).toBeEnabled();
+				await expect(page.locator('#clear-cache')).toBeDisabled();
+
+				await page.locator('#settings-tab-privacy').click();
+				await expect(page.locator('select[title="You are offline. You don\'t have access here right now."]')).toBeDisabled();
+
+				await page.locator('#settings-tab-account').click();
+				await expect(page.locator('#add-passkey-trigger')).toBeDisabled();
+				await expect(page.locator('#rename-passkey')).toBeDisabled();
+				await expect(page.locator('#delete-account')).toBeDisabled();
+
+				await navigateFromSidebar(page, 'activity', /^\/activity(?:\?|$)/);
+				await expect(page.getByRole('heading', { name: 'Activity', exact: true })).toBeVisible();
 			});
 
 			await test.step('reconnect and synchronize the wallet', async () => {
