@@ -37,15 +37,15 @@ wwWallet is a modular reference implementation for verifiable credentials, provi
    ```
 ### First-time Setup
 5. Initialize DB:
-	- Uploads IACA certificate generated from step 3. to the database of the wallet
-	- Registers issuer and verifier in the database of the wallet
+   - Uploads IACA certificate generated from step 3. to the database of the wallet
+   - Registers issuer and verifier in the database of the wallet
    - Initializes wallet-verifier database
    - Initializes vct-registry database
-	```sh
+   ```sh
    yarn init-db
    ```
 6. Install pre-commit hooks (optional but recommended):
-   - Installs pre-commit hooks that enforce `.editorconfig` rules and apply minimal auto-fixes (e.g. adding missing newlines) across all submodules that include an `.editorconfig` file.
+   - Installs pre-commit hooks in this repository and submodules that include a `.pre-commit-config.yaml` file. The hooks enforce `.editorconfig` rules and apply minimal auto-fixes (e.g. adding missing newlines).
    ```sh
    yarn install:precommit-hooks
    ```
@@ -57,3 +57,24 @@ wwWallet is a modular reference implementation for verifiable credentials, provi
 
 ## 🤝 Contributing
 Want to contribute? Check out our [Contribution Guidelines](https://github.com/wwWallet/.github/blob/main/CONTRIBUTING.md) for more details!
+
+### Code formatting
+
+The root repository uses the native EditorConfig checker in pre-commit and CI. `.editorconfig-checker.json` shares the checker exclusions for dependencies, generated files and submodules. Each submodule runs its own formatting checks.
+
+To install hooks only for the root repository, then run all hooks:
+
+```sh
+pre-commit install
+pre-commit run --all-files
+```
+
+Use `yarn install:precommit-hooks` to install hooks in the root repository and submodules together.
+
+To check formatting without changing or staging files:
+
+```sh
+pre-commit run editorconfig-checker --all-files
+```
+
+Omit `--all-files` to check only staged files. The first run installs the pinned native checker in pre-commit's cache. On commit, the final-newline fixer runs before the checker; fix any remaining violations and stage the changes before retrying.

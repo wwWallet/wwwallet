@@ -25,4 +25,3 @@ openssl crl -in ${WORKDIR}/keystore/crl/wwwallet_org_iaca.crl -outform DER -out 
 # convert key to PKCS8 format
 KEY_PATH="${WORKDIR}/keystore/wwwallet_org_iaca.key"
 openssl pkcs8 -topk8 -inform PEM -in ${KEY_PATH} -outform PEM -out ${KEY_PATH}.pkcs8  -nocrypt
-
