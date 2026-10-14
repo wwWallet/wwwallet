@@ -1,0 +1,16 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: end-of-file-fixer
+        name: Minor auto-fixes
+        exclude: (^|/)(node_modules|dist|build|coverage|\.nyc_output|test-results|playwright-report|blob-report)/|(^|/)playwright/\.cache/|(^|/)\.DS_Store$|^scripts/keystore/|^(lib/wallet-common|privacy-gateway-server-go|vct-registry|wallet-as|wallet-backend-server|wallet-frontend|wallet-issuer|wallet-verifier)(/|$)
+
+  - repo: https://github.com/editorconfig-checker/editorconfig-checker
+    rev: v4.0.2
+    hooks:
+      - id: editorconfig-checker
+        name: Check .editorconfig rules
+        args: ["-no-color"]
+        types_or: [text]
+        # Exclusions are shared with CI in .editorconfig-checker.json

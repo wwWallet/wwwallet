@@ -1,0 +1,22 @@
+# EditorConfig: https://EditorConfig.org
+
+root = true
+
+[*]
+charset = utf-8
+# Type of newline is managed by git in .gitattributes
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = tab
+
+[LICENSE]
+indent_style = space
+
+# Markdown list markers determine the required indentation width
+[*.md]
+indent_style = space
+
+# YAML does not allow tab indentation; shell scripts and JSON use two spaces
+[*.{sh,json,yml,yaml}]
+indent_style = space
+indent_size = 2
