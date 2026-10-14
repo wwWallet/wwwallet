@@ -56,11 +56,13 @@ presentation-history lifecycle. Cached sidebar navigation and the Add Credential
 also checked offline, including disabled issuance actions. Cached credential, Add Credentials,
 Activity, and Settings routes are hard-reloaded to exercise the service worker's app-shell
 fallback, and network-dependent Settings actions are verified as disabled. The suite verifies that
-reconnecting requires and completes the online passkey synchronization flow before issuance and
-normal online navigation are restored. Run it against an HTTPS environment with:
+an offline credential deletion persists across reload and offline login, then reconciles with the
+remote wallet after reconnect. It also verifies that reconnecting requires and completes the online
+passkey synchronization flow before issuance and normal online navigation are restored. With the
+HTTPS environment configured in `e2e/.env`, run:
 
 ```sh
-WALLET_URL=https://wallet.example.org yarn playwright test tests/offline.spec.ts
+yarn playwright test tests/offline.spec.ts
 ```
 
 ## Debug
