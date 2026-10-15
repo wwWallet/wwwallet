@@ -3,6 +3,6 @@
     "(^|/)(node_modules|dist|build|coverage|\\.nyc_output|test-results|playwright-report|blob-report)/",
     "(^|/)playwright/\\.cache/",
     "^scripts/keystore/",
-    "^(lib/wallet-common|privacy-gateway-server-go|vct-registry|wallet-as|wallet-backend-server|wallet-frontend|wallet-issuer|wallet-verifier)(/|$)"
+    "^(lib/wallet-common|privacy-gateway-server-go|vct-registry|wallet-as|wallet-backend-server|wallet-docs|wallet-frontend|wallet-issuer|wallet-verifier)(/|$)"
   ]
 }

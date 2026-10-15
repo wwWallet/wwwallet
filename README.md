@@ -3,6 +3,7 @@
 wwWallet is a modular reference implementation for verifiable credentials, providing an end-to-end stack: a browser-based web wallet (with WebAuthn support), an OpenID4VCI credential issuer, an OpenID4VP verifier, an OIDC authorization server, and a shared TypeScript library of protocol helpers and utilities for integration and testing.
 
 ## 📦 Modules
+
 - `wallet-frontend` — Wallet frontend ([wallet-frontend/README.md](https://github.com/wwWallet/wallet-frontend/blob/master/README.md))
 - `wallet-backend-server` — Wallet backend and DB ([wallet-backend-server/README.md](https://github.com/wwWallet/wallet-backend-server/blob/master/README.md))
 - `wallet-issuer` — Issuer ([wallet-issuer/README.md](https://github.com/wwWallet/wallet-issuer/blob/master/README.md))
@@ -10,6 +11,7 @@ wwWallet is a modular reference implementation for verifiable credentials, provi
 - `wallet-as` — Authorization Server ([wallet-as/README.md](https://github.com/wwWallet/wallet-as/blob/master/README.md))
 - `vct-registry` — SD-JWT VC Type Metadata Registry ([vct-registry/README.md](https://github.com/wwWallet/vct-registry/blob/master/README.md))
 - `lib/wallet-common` — Shared library ([wallet-common/README.md](https://github.com/wwWallet/wallet-common/blob/master/README.md))
+- `wallet-docs` — Documentation website ([wallet-docs/README.md](https://github.com/wwWallet/wallet-docs/blob/master/README.md))
 
 
 ## 🔍 Prerequisites
@@ -49,6 +51,14 @@ wwWallet is a modular reference implementation for verifiable credentials, provi
    ```sh
    yarn install:precommit-hooks
    ```
+
+### Documentation website
+
+After `yarn install`, you can optionally start the documentation website separately on port 8001:
+
+```sh
+yarn --cwd wallet-docs start
+```
 
 ## 🏭 Build for Production
   ```sh
