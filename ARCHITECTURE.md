@@ -21,6 +21,7 @@ The root repository assembles them and supplies development and build tooling.
 | `vct-registry` | Registry and administration UI for SD-JWT VC Type Metadata. Exposes public metadata APIs and authenticated create/edit/delete operations with validation and previews. | MariaDB `vct_registry` database, `wallet-common` schemas/rendering |
 | `lib/wallet-common` | Shared protocol library. Defines OpenID4VCI/OpenID4VP types and schemas, credential parsing and verification engines, mdoc and SD-JWT VC support, trust/certificate utilities, metadata resolution and credential rendering helpers. | Consumed by the frontend, issuer, verifier, authorization server and registry |
 | `privacy-gateway-server-go` | Optional Oblivious HTTP gateway. Decapsulates OHTTP/Binary HTTP requests, fetches an allowed target and encapsulates the response so the target does not see the wallet's network identity. | Stateless Go service with an HPKE key derived from configured seed material |
+| `wallet-docs` | Docusaurus documentation website. Runs separately from the wallet services. | Node.js, Yarn |
 | root, `scripts/`, `db-setup/` | Development and release orchestration. Starts infrastructure and services, prepares configuration and keys, initializes databases and trust records, and builds container images. | Docker Compose, Yarn, MariaDB, Valkey |
 
 ## Runtime relationships
