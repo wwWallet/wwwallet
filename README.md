@@ -1,6 +1,6 @@
 # wwWallet
 
-wwWallet is a modular reference implementation for verifiable credentials, providing an end-to-end stack: a browser-based web wallet (with WebAuthn support), an OpenID4VCI credential issuer, an OpenID4VP verifier, an OIDC authorization server, and a shared TypeScript library of protocol helpers and utilities for integration and testing.
+wwWallet is a modular reference implementation for verifiable credentials, providing an end-to-end stack: a browser-based web wallet (with WebAuthn support), an OpenID4VCI credential issuer, an OpenID4VP verifier, an OIDC authorization server, an SD-JWT VC type metadata registry, and a shared TypeScript library of protocol helpers and utilities for integration and testing.
 
 ## 📦 Modules
 
