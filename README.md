@@ -52,6 +52,16 @@ wwWallet is a modular reference implementation for verifiable credentials, provi
    yarn install:precommit-hooks
    ```
 
+### Update submodules
+
+Check out `master` and pull the latest changes in all initialized submodules:
+
+```sh
+yarn submodules:pull
+```
+
+Submodules without a `master` branch are skipped. Pulls use `--ff-only`. Failed checkouts or pulls are reported, and the script continues with the remaining submodules. It lists all failed submodules at the end and exits with an error if any failed.
+
 ### Documentation website
 
 After `yarn install`, you can optionally start the documentation website separately on port 8001:
