@@ -22,3 +22,6 @@
 [submodule "privacy-gateway-server-go"]
 	path = privacy-gateway-server-go
 	url = https://github.com/gunet/privacy-gateway-server-go.git
+[submodule "wallet-docs"]
+	path = wallet-docs
+	url = git@github.com:wwWallet/wallet-docs.git
