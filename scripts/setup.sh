@@ -11,7 +11,10 @@ echo "KEYS_DIR=$PWD/wallet-backend-server/keys" >> wallet-backend-server/.env
 
 cp wallet-frontend/.env.template wallet-frontend/.env
 cp wallet-issuer/.env.template wallet-issuer/.env
-sed "s/^ABCA_CHALLENGE_SECRET=.*/ABCA_CHALLENGE_SECRET=$(openssl rand -hex 32)/" wallet-as/.env.template > wallet-as/.env
+sed \
+  -e "s/^ABCA_CHALLENGE_SECRET=.*/ABCA_CHALLENGE_SECRET=$(openssl rand -hex 32)/" \
+  -e "s/^DPOP_NONCE_SECRET=.*/DPOP_NONCE_SECRET=$(openssl rand -hex 16)/" \
+  wallet-as/.env.template > wallet-as/.env
 cp wallet-verifier/.env.template wallet-verifier/.env
 cp vct-registry/.env.template vct-registry/.env
 
