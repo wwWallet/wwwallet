@@ -54,6 +54,108 @@ export async function replacePasskeyAuthenticator(client: CDPSession, authentica
 	return addPasskeyAuthenticator(client);
 }
 
+// Copies the WebAuthn signing credentials from one virtual authenticator to
+// another. CDP does not expose the separate PRF/HMAC secret, so tests for a
+// wallet that encrypts data with PRF must transfer that output independently.
+// Browser storage is deliberately not copied: the second browser must restore
+// the wallet from the backend in the same way a genuinely new device would.
+export async function copyPasskeysToAuthenticator(
+	sourceClient: CDPSession,
+	sourceAuthenticatorId: string,
+	targetClient: CDPSession,
+	targetAuthenticatorId: string,
+): Promise<void> {
+	const { credentials } = await sourceClient.send('WebAuthn.getCredentials', {
+		authenticatorId: sourceAuthenticatorId,
+	});
+
+	if (credentials.length === 0) {
+		throw new Error('The source authenticator has no passkeys to copy');
+	}
+
+	await targetClient.send('WebAuthn.clearCredentials', {
+		authenticatorId: targetAuthenticatorId,
+	});
+
+	for (const credential of credentials) {
+		await targetClient.send('WebAuthn.addCredential', {
+			authenticatorId: targetAuthenticatorId,
+			credential,
+		});
+	}
+}
+
+// Captures the PRF result used when the wallet creates its passkey. Chromium's
+// virtual authenticator keeps the underlying random HMAC key private, even
+// when WebAuthn.getCredentials exports the rest of the credential.
+export async function captureCreatedPasskeyPrfOutput(page: Page): Promise<() => Promise<number[]>> {
+	await page.addInitScript(() => {
+		const credentials = navigator.credentials;
+		const originalCreate = credentials.create.bind(credentials);
+
+		Object.defineProperty(credentials, 'create', {
+			configurable: true,
+			value: async (options: CredentialCreationOptions) => {
+				const credential = await originalCreate(options);
+				if (credential instanceof PublicKeyCredential) {
+					const extensionResults = credential.getClientExtensionResults() as AuthenticationExtensionsClientOutputs & {
+						prf?: { results?: { first?: ArrayBuffer } },
+					};
+					const first = extensionResults.prf?.results?.first;
+					if (first) {
+						(window as typeof window & { __playwrightPasskeyPrfOutput?: number[] })
+							.__playwrightPasskeyPrfOutput = Array.from(new Uint8Array(first));
+					}
+				}
+				return credential;
+			},
+		});
+	});
+
+	return async () => {
+		const output = await page.evaluate(
+			() => (window as typeof window & { __playwrightPasskeyPrfOutput?: number[] }).__playwrightPasskeyPrfOutput,
+		);
+		if (!output) {
+			throw new Error('The passkey registration did not return a PRF output');
+		}
+		return output;
+	};
+}
+
+// CDP can import the same signing credential into another authenticator but
+// cannot import its PRF/HMAC secret. Returning the captured output here models
+// the PRF continuity provided by a real passkey-sync provider.
+export async function useSyncedPasskeyPrfOutput(page: Page, prfOutput: number[]): Promise<void> {
+	await page.addInitScript((output) => {
+		const credentials = navigator.credentials;
+		const originalGet = credentials.get.bind(credentials);
+
+		Object.defineProperty(credentials, 'get', {
+			configurable: true,
+			value: async (options: CredentialRequestOptions) => {
+				const credential = await originalGet(options);
+				if (!(credential instanceof PublicKeyCredential)) {
+					return credential;
+				}
+
+				const extensionResults = credential.getClientExtensionResults();
+				Object.defineProperty(credential, 'getClientExtensionResults', {
+					configurable: true,
+					value: () => ({
+						...extensionResults,
+						prf: {
+							...(extensionResults as AuthenticationExtensionsClientOutputs & { prf?: object }).prf,
+							results: { first: new Uint8Array(output).buffer },
+						},
+					}),
+				});
+				return credential;
+			},
+		});
+	}, prfOutput);
+}
+
 // Signs up a brand-new wallet with a simulated passkey (registered via
 // setUpPasskeyAuthenticator) and lands on the home page.
 export async function signUp(page: Page, walletName: string = `Playwright Wallet ${Date.now()}`): Promise<string> {
