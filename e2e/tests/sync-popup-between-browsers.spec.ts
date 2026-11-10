@@ -153,6 +153,7 @@ test.describe('one wallet in two browsers', () => {
 
 			// Reverse the direction: Browser 2 changes the wallet; Browser 1 accepts it.
 			await issueCredential(secondPage, 'EHIC');
+			await expect(secondPage.getByRole('button', { name: 'EHIC', exact: true })).toBeVisible({ timeout: 20_000 });
 			await reloadAndExpectSyncStatus(page, 200);
 			await expectSyncPopup(page);
 			await acceptRemoteWallet(page, ['PID', 'EHIC']);
