@@ -134,6 +134,7 @@ test.describe('one wallet in two browsers', () => {
 
 			await test.step('Browser 2 sees the sync popup after Browser 1 gets a PID', async () => {
 				await issueCredential(page, 'PID');
+				await expect(page.getByRole('button', { name: 'PID', exact: true })).toBeVisible({ timeout: 20_000 });
 				await reloadAndExpectSyncStatus(secondPage, 200);
 				await expectSyncPopup(secondPage);
 			});
