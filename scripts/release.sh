@@ -6,6 +6,7 @@ WALLET_BACKEND_REPOSITORY="wwwallet/wallet-backend-server"
 WALLET_AS_REPOSITORY="wwwallet/wallet-as"
 WALLET_ISSUER_REPOSITORY="wwwallet/wallet-issuer"
 WALLET_VERIFIER_REPOSITORY="wwwallet/wallet-verifier"
+VCT_REGISTRY_REPOSITORY="wwwallet/vct-registry"
 
 print_help() {
   cat <<EOF
@@ -59,6 +60,7 @@ gh release create ${ver} --generate-notes --title "${title}" --prerelease --repo
 gh release create ${ver} --generate-notes --title "${title}" --prerelease --repo "${WALLET_AS_REPOSITORY}" --draft
 gh release create ${ver} --generate-notes --title "${title}" --prerelease --repo "${WALLET_ISSUER_REPOSITORY}" --draft
 gh release create ${ver} --generate-notes --title "${title}" --prerelease --repo "${WALLET_VERIFIER_REPOSITORY}" --draft
+gh release create ${ver} --generate-notes --title "${title}" --prerelease --repo "${VCT_REGISTRY_REPOSITORY}" --draft
 gh release create ${ver} --generate-notes --title "${title}" --prerelease --repo "${WWWALLET_REPOSITORY}" --draft
 
 echo "Drafts created..."
