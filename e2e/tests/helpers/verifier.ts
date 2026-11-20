@@ -1,7 +1,12 @@
 import type { Page, BrowserContext } from '@playwright/test';
-import { selectAndSendAllRequestedCredentials } from './presentation';
+import { selectAndSendAllRequestedCredentials, type PresentationSelectionOptions } from './presentation';
 import { mockCameraWithQrCode } from './qr';
 import { WALLET_URL, VERIFIER_URL, onService } from './config';
+
+type DcqlQuery = {
+	credentials: Array<Record<string, unknown>>;
+	credential_sets?: Array<{ required?: boolean; options: string[][] }>;
+};
 
 async function openVerifierRequestPage(page: Page, definitionTitle: string): Promise<void> {
 	await page.goto(`${VERIFIER_URL}/verifier/public/definitions`);
@@ -12,13 +17,16 @@ async function openVerifierRequestPage(page: Page, definitionTitle: string): Pro
 // Shared tail of every wallet-verifier presentation, once its request page
 // (with the "Open with wwWallet" button) is showing: ends on the verifier's
 // own "Presentation Successful" result page.
-async function openInWwalletAndSendPresentation(page: Page): Promise<void> {
+async function openInWwalletAndSendPresentation(
+	page: Page,
+	selectionOptions: PresentationSelectionOptions = {},
+): Promise<void> {
 	await page.getByRole('button', { name: 'Open with wwWallet', exact: true }).click();
 	// The verifier hands the OpenID4VP request to the wallet either at /cb (local
 	// stack) or at the app root (e.g. qa), both carrying the request in the query.
 	await page.waitForURL(onService(WALLET_URL, /^\/(cb)?\?/), { timeout: 20_000 });
 
-	await selectAndSendAllRequestedCredentials(page);
+	await selectAndSendAllRequestedCredentials(page, selectionOptions);
 	await page.waitForURL(onService(VERIFIER_URL, /^\/verifier\/callback/), { timeout: 20_000 });
 }
 
@@ -29,6 +37,33 @@ async function openInWwalletAndSendPresentation(page: Page): Promise<void> {
 export async function presentCredentialsToVerifier(page: Page, definitionTitle: string): Promise<void> {
 	await openVerifierRequestPage(page, definitionTitle);
 	await openInWwalletAndSendPresentation(page);
+}
+
+export async function presentCustomCredentialsToVerifier(
+	page: Page,
+	query: DcqlQuery,
+	selectionOptions: PresentationSelectionOptions = {},
+): Promise<void> {
+	await page.goto(`${VERIFIER_URL}/verifier/public/definitions/request-custom-credential`);
+	const editorInput = page.locator('#jsoneditor textarea.ace_text-input, #jsoneditor textarea').first();
+	await editorInput.waitFor({ state: 'attached', timeout: 20_000 });
+	await editorInput.focus();
+	await page.keyboard.press('ControlOrMeta+A');
+	await page.keyboard.type(JSON.stringify(query, null, 2));
+	// Keep the editor interaction visible in the test, but submit the exact
+	// JSON through the form field rather than relying on Ace's internal state.
+	await page.locator('#dcqlQueryText').evaluate((element, dcqlQuery) => {
+		const textarea = element as HTMLTextAreaElement;
+		textarea.value = JSON.stringify(dcqlQuery);
+		textarea.form?.submit();
+	}, query);
+	// The custom-query POST renders the presentation request directly, so its
+	// URL remains /request-custom-credential. Wait for the rendered action.
+	await page.getByRole('button', { name: 'Open with wwWallet', exact: true }).waitFor({
+		state: 'visible',
+		timeout: 20_000,
+	});
+	await openInWwalletAndSendPresentation(page, selectionOptions);
 }
 
 export async function presentCredentialsToVerifierByScanningQrCode(page: Page, context: BrowserContext, definitionTitle: string): Promise<Page> {
