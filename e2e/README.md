@@ -48,6 +48,16 @@ The stress test is skipped by default. Run it explicitly with:
 RUN_STRESS_TESTS=1 yarn playwright test tests/account-lifecycle-stress.spec.ts
 ```
 
+The offline PWA tests exercise the production service worker, so `WALLET_URL` must point to a
+deployed HTTPS wallet on a non-local hostname. They are skipped for `localhost`, `127.0.0.1` and
+`::1`. The suite covers the cached app shell, offline login, wallet routes and credential deletion.
+It also verifies that network-only actions remain disabled and offline changes synchronize after
+reconnecting. With the HTTPS environment configured in `e2e/.env`, run:
+
+```sh
+yarn playwright test tests/offline.spec.ts
+```
+
 ## Debug
 
 ```sh

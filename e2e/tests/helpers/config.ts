@@ -12,8 +12,8 @@ if (fs.existsSync(envFile)) {
 
 // Service URLs for the environment under test. They default to the local dev
 // stack and can be overridden through environment variables or e2e/.env.
-// WALLET_URL also feeds playwright.config.ts's baseURL, so page.goto('/add')
-// and friends follow it automatically.
+// WALLET_URL also feeds playwright.config.ts's baseURL, so relative wallet
+// navigations follow it automatically.
 export const WALLET_URL = process.env.WALLET_URL ?? 'http://localhost:3000';
 export const ISSUER_URL = process.env.ISSUER_URL ?? 'http://localhost:8003';
 export const WALLET_AS_URL = process.env.WALLET_AS_URL ?? 'http://localhost:6060';
