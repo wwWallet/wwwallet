@@ -1,0 +1,55 @@
+{
+  "credentials": [
+    {
+      "id": "pid_sd",
+      "format": "dc+sd-jwt",
+      "multiple": false,
+      "meta": { "vct_values": ["urn:eudi:pid:1"] },
+      "claims": [
+        { "path": ["given_name"] },
+        { "path": ["family_name"] },
+        { "path": ["age_equal_or_over", "18"], "values": [true] }
+      ]
+    },
+    {
+      "id": "pid_mdoc",
+      "format": "mso_mdoc",
+      "multiple": false,
+      "meta": { "doctype_value": "eu.europa.ec.eudi.pid.1" },
+      "claims": [
+        { "path": ["eu.europa.ec.eudi.pid.1", "given_name"] },
+        { "path": ["eu.europa.ec.eudi.pid.1", "family_name"] },
+        { "path": ["eu.europa.ec.eudi.pid.1", "age_over_18"], "values": [true] }
+      ]
+    },
+    {
+      "id": "graduate_diploma",
+      "format": "dc+sd-jwt",
+      "multiple": true,
+      "meta": { "vct_values": ["urn:credential:diploma"] },
+      "claims": [
+        { "path": ["given_name"] },
+        { "path": ["family_name"] },
+        { "path": ["title"] },
+        { "path": ["eqf_level"], "values": [6, 7, 8, "6", "7", "8"] }
+      ]
+    },
+    {
+      "id": "ehic",
+      "format": "dc+sd-jwt",
+      "multiple": false,
+      "meta": { "vct_values": ["urn:eudi:ehic:1"] },
+      "claims": [
+        { "path": ["personal_administrative_number"] },
+        { "path": ["issuing_country"] },
+        { "path": ["date_of_expiry"] }
+      ]
+    }
+  ],
+  "credential_sets": [
+    {
+      "required": true,
+      "options": [["pid_mdoc", "graduate_diploma", "ehic"]]
+    }
+  ]
+}
