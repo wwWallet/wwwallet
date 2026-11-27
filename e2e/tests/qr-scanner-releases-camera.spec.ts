@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { signUpNewWallet } from './helpers';
-import { mockBlankCameras, countCameraRequests, cameraTracks } from './helpers/qr';
+import { mockBlankCameras, countCameraRequests, cameraTracks, mockCameraWithQrCode } from './helpers/qr';
 
 // How the QR scanner handles the camera across tab switches. Closing it must
 // release the camera for good: a scanner that is never destroyed keeps
@@ -103,4 +103,19 @@ test('a failed camera permission check shows its message and the popup can be cl
 	await expect(page.getByText('Please allow camera permission to use the QR scanner.')).toBeVisible({ timeout: 5_000 });
 	await page.locator('#close-qr-code-scanner-perm').click();
 	await expect(page.locator('#close-qr-code-scanner-perm')).toBeHidden();
+});
+
+test('one valid scan sends one redirect even when navigation is slow', async ({ page, context }) => {
+	await signUpNewWallet(page, context);
+	await mockCameraWithQrCode(page, 'openid-credential-offer://?credential_offer_uri=https://example.com/offer?token=abc');
+	let redirects = 0;
+	await page.route('**/cb?**', async route => {
+		redirects++;
+		expect(route.request().url()).toContain('offer?token=abc&wwwallet_camera_was_used=true');
+		await new Promise(resolve => setTimeout(resolve, 1500));
+		await route.fulfill({ contentType: 'text/html', body: '<p>Callback received</p>' });
+	});
+	await tapQrButton(page);
+	await expect(page.getByText('Callback received')).toBeVisible({ timeout: 10000 });
+	expect(redirects).toBe(1);
 });
